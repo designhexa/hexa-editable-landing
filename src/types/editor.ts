@@ -1,6 +1,6 @@
 
 // Type definitions for the editor
-export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section';
+export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section' | 'milestone';
 export type UserRole = 'viewer' | 'editor' | 'admin';
 export type SectionType = 'content' | 'header' | 'footer';
 
