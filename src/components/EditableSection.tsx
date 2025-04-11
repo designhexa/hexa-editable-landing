@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Section } from '@/context/EditorContext';
 import { useEditor } from '@/context/EditorContext';
@@ -167,11 +166,11 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     updateSection(pageId, section.id, {
       properties: {
         ...section.properties,
-        isGridLayout: !section.properties?.isGridLayout,
+        isGridLayout: section.properties?.isGridLayout ? 'false' : 'true',
         gridColumns: section.properties?.gridColumns || 'grid-cols-1 md:grid-cols-3',
         gridRows: section.properties?.gridRows || 'auto',
         gridGap: section.properties?.gridGap || 'gap-4',
-        isDraggableGrid: section.properties?.isGridLayout ? section.properties?.isDraggableGrid : true
+        isDraggableGrid: section.properties?.isGridLayout ? section.properties?.isDraggableGrid : 'true'
       }
     });
   };
@@ -180,7 +179,7 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     updateSection(pageId, section.id, {
       properties: {
         ...section.properties,
-        isDraggableGrid: !section.properties?.isDraggableGrid
+        isDraggableGrid: section.properties?.isDraggableGrid === 'true' ? 'false' : 'true'
       }
     });
   };
@@ -225,8 +224,8 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     }
   };
 
-  const isGridLayout = section.properties?.isGridLayout;
-  const isDraggableGrid = section.properties?.isDraggableGrid;
+  const isGridLayout = section.properties?.isGridLayout === 'true';
+  const isDraggableGrid = section.properties?.isDraggableGrid === 'true';
   const currentHeight = section.properties?.height || 'auto';
   const currentGridType = section.properties?.gridType || '1x1';
 
@@ -445,7 +444,7 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
                     <input
                       type="checkbox"
                       id="draggableGrid"
-                      checked={!!isDraggableGrid}
+                      checked={isDraggableGrid}
                       onChange={toggleDraggableGrid}
                       className="mr-2"
                     />

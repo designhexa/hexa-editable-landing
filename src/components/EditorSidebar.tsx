@@ -240,7 +240,7 @@ const EditorSidebar: React.FC = () => {
   
   if (selectedElementData && currentPage) {
     const section = currentPage.sections.find(s => s.id === selectedElementData.sectionId);
-    currentSectionUsesGrid = section?.properties?.isGridLayout || false;
+    currentSectionUsesGrid = section?.properties?.isGridLayout === 'true';
   }
 
   const isTextElement = selectedElementData && ['heading', 'text', 'button'].includes(selectedElementData.element.type);

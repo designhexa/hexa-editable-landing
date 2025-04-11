@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { nanoid } from 'nanoid';
@@ -173,10 +172,10 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   
   // Get user role
-  const userRole = user?.role || 'viewer';
+  const userRole = currentUser?.role || 'viewer';
   
   // Load pages from localStorage on initial render
   useEffect(() => {

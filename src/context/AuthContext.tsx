@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 export type UserRole = 'editor' | 'admin' | 'viewer';
 
 // Define user structure
-type User = {
+export type User = {
   username: string;
   role: UserRole;
 };
@@ -19,7 +19,7 @@ const MOCK_USERS = [
 ];
 
 // Define context type
-type AuthContextType = {
+export type AuthContextType = {
   currentUser: User | null;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<boolean>;
