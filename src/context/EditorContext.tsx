@@ -1,619 +1,826 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { nanoid } from 'nanoid';
-import { useAuth } from './AuthContext';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
-// Types for our page editor
-export type ElementType = 'text' | 'heading' | 'image' | 'button' | 'container' | 'link';
+export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section';
+export type UserRole = 'viewer' | 'editor' | 'admin';
+export type SectionType = 'content' | 'header' | 'footer';
+
+export interface MenuItem {
+  id: string;
+  title: string;
+  url: string;
+  order: number;
+}
 
 export interface PageElement {
   id: string;
   type: ElementType;
   content: string;
-  attributes?: Record<string, string>;
-  properties?: Record<string, string>;
-  children?: PageElement[];
-  parentId?: string | null;
-  index?: number;
+  properties?: Record<string, any>;
   gridPosition?: {
-    column?: string;
-    row?: string;
-    columnSpan?: string;
-    rowSpan?: string;
+    column: string;
+    row: string;
+    columnSpan: string;
+    rowSpan: string;
+  };
+  textStyle?: {
+    fontFamily: string;
+    fontSize: string;
+    lineHeight: string;
+    letterSpacing: string;
+    textAlign: string;
   };
 }
 
 export interface Section {
   id: string;
-  type?: 'header' | 'content' | 'footer';
-  properties?: Record<string, string>;
   elements: PageElement[];
+  properties?: {
+    backgroundColor?: string;
+    paddingY?: string;
+    paddingX?: string;
+    height?: string;
+    isGridLayout?: boolean;
+    gridColumns?: string;
+    gridRows?: string;
+    gridGap?: string;
+    gridType?: string;
+    isDraggableGrid?: boolean;
+  };
+  type?: SectionType;
 }
 
 export interface Page {
   id: string;
   title: string;
   slug: string;
-  description?: string;
-  isPublished?: boolean;
   sections: Section[];
-  createdAt?: string;
-  updatedAt?: string;
+  isPublished: boolean;
+  publishedAt?: string;
 }
 
-// Selected element data for editor
-export interface SelectedElementData {
-  pageId: string;
-  sectionId: string;
-  element: PageElement;
-}
-
-// Initial demo content
-const initialPages: Page[] = [
-  {
-    id: 'home-page',
-    title: 'Home',
-    slug: '/',
-    isPublished: true,
-    sections: [
-      {
-        id: 'header-section',
-        type: 'header',
-        properties: {
-          backgroundColor: 'bg-white',
-          paddingY: 'py-4',
-          paddingX: 'px-4'
-        },
-        elements: [
-          {
-            id: 'header-title',
-            type: 'heading',
-            content: 'Website Builder',
-            properties: {
-              className: 'text-xl font-bold'
-            }
-          }
-        ]
-      },
-      {
-        id: 'content-section',
-        type: 'content',
-        properties: {
-          backgroundColor: 'bg-white',
-          paddingY: 'py-12',
-          paddingX: 'px-4'
-        },
-        elements: [
-          {
-            id: 'main-heading',
-            type: 'heading',
-            content: 'Welcome to Page Builder',
-            properties: {
-              className: 'text-3xl font-bold text-center mb-8'
-            }
-          },
-          {
-            id: 'intro-paragraph',
-            type: 'text',
-            content: 'This is a simple web page builder. You can edit this content when logged in as an editor or admin.',
-            properties: {
-              className: 'text-center max-w-2xl mx-auto'
-            }
-          },
-          {
-            id: 'cta-button',
-            type: 'button',
-            content: 'Learn More',
-            properties: {
-              className: 'bg-editor-blue hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-6 mx-auto block'
-            }
-          },
-        ]
-      },
-      {
-        id: 'footer-section',
-        type: 'footer',
-        properties: {
-          backgroundColor: 'bg-gray-800',
-          paddingY: 'py-8',
-          paddingX: 'px-4'
-        },
-        elements: [
-          {
-            id: 'footer-text',
-            type: 'text',
-            content: '© 2025 Website Builder. All rights reserved.',
-            properties: {
-              className: 'text-gray-400 text-center'
-            }
-          }
-        ]
-      }
-    ]
-  }
-];
-
-// Define context type
 interface EditorContextType {
   pages: Page[];
   currentPageId: string;
-  setCurrentPageId: (id: string) => void;
   isEditMode: boolean;
-  setEditMode: (isEdit: boolean) => void;
-  userRole: string;
-  updatePage: (pageId: string, updates: Partial<Page>) => void;
+  selectedElementId: string | null;
+  userRole: UserRole;
+  navigation: MenuItem[];
   addPage: (page: Page) => void;
-  removePage: (pageId: string, redirectToPageId?: string) => void;
+  removePage: (pageId: string, newPageId: string) => void;
+  setCurrentPageId: (id: string) => void;
+  updatePage: (pageId: string, updatedPage: Partial<Page>) => void;
+  toggleEditMode: () => void;
   addSection: (pageId: string, section: Section) => void;
-  replaceHeaderSection: (pageId: string, section: Section) => void;
-  replaceFooterSection: (pageId: string, section: Section) => void;
-  updateSection: (pageId: string, sectionId: string, updates: Partial<Section>) => void;
+  updateSection: (pageId: string, sectionId: string, section: Partial<Section>) => void;
   removeSection: (pageId: string, sectionId: string) => void;
   addElement: (pageId: string, sectionId: string, element: PageElement) => void;
-  updateElement: (pageId: string, sectionId: string, elementId: string, updates: Partial<PageElement>) => void;
+  updateElement: (pageId: string, sectionId: string, elementId: string, element: Partial<PageElement>) => void;
   removeElement: (pageId: string, sectionId: string, elementId: string) => void;
-  selectedElementId: string | null;
-  setSelectedElementId: (id: string | null) => void;
-  getSelectedElement: () => SelectedElementData | null;
-  saveEditorChanges: () => Promise<void>;
-  currentPage?: Page;
   selectElement: (elementId: string | null) => void;
   duplicateSection: (pageId: string, sectionId: string) => void;
   moveSectionUp: (pageId: string, sectionId: string) => void;
   moveSectionDown: (pageId: string, sectionId: string) => void;
-  publishChanges: () => Promise<void>;
+  getSelectedElement: () => { pageId: string, sectionId: string, element: PageElement } | null;
+  setUserRole: (role: UserRole) => void;
+  publishPage: (pageId: string) => void;
+  unpublishPage: (pageId: string) => void;
+  replaceHeaderSection: (pageId: string, newHeaderSection: Section) => void;
+  replaceFooterSection: (pageId: string, newFooterSection: Section) => void;
+  updateNavigation: (items: MenuItem[]) => void;
+  saveEditorChanges: () => Promise<void>;
 }
 
-const EditorContext = createContext<EditorContextType | undefined>(undefined);
+export const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
-export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [pages, setPages] = useState<Page[]>([]);
-  const [currentPageId, setCurrentPageId] = useState<string>('');
+export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [pages, setPages] = useState<Page[]>([defaultHomePage]);
+  const [currentPageId, setCurrentPageId] = useState(defaultHomePage.id);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
-  const { toast } = useToast();
-  const { currentUser } = useAuth();
-  
-  // Get user role
-  const userRole = currentUser?.role || 'viewer';
-  
-  // Load pages from localStorage on initial render
-  useEffect(() => {
-    const storedPages = localStorage.getItem('pages');
-    if (storedPages) {
-      try {
-        setPages(JSON.parse(storedPages));
-      } catch (error) {
-        console.error('Error parsing stored pages:', error);
-        setPages(initialPages);
-        localStorage.setItem('pages', JSON.stringify(initialPages));
-      }
-    } else {
-      setPages(initialPages);
-      localStorage.setItem('pages', JSON.stringify(initialPages));
+  const [userRole, setUserRole] = useState<UserRole>('viewer');
+  const [navigation, setNavigation] = useState<MenuItem[]>(defaultNavigation);
+
+  const addPage = (page: Page) => {
+    setPages((prevPages) => [...prevPages, page]);
+  };
+
+  const removePage = (pageId: string, newPageId: string) => {
+    setPages((prevPages) => prevPages.filter(page => page.id !== pageId));
+    setNavigation((prevNav) => prevNav.filter(item => item.url !== pages.find(p => p.id === pageId)?.slug));
+    setCurrentPageId(newPageId);
+  };
+
+  const updatePage = (pageId: string, updatedPage: Partial<Page>) => {
+    const oldPage = pages.find(p => p.id === pageId);
+    
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId ? { ...page, ...updatedPage } : page
+      )
+    );
+    
+    if (updatedPage.slug && oldPage?.slug) {
+      setNavigation((prevNav) =>
+        prevNav.map(item => 
+          item.url === oldPage.slug ? { ...item, url: updatedPage.slug } : item
+        )
+      );
     }
-  }, []);
+  };
 
-  // Set initial page if not set
-  useEffect(() => {
-    if (pages.length > 0 && !currentPageId) {
-      setCurrentPageId(pages[0].id);
+  const toggleEditMode = () => {
+    if (userRole === 'viewer') {
+      return;
     }
-  }, [pages, currentPageId]);
+    
+    setIsEditMode((prev) => !prev);
+    if (isEditMode) {
+      setSelectedElementId(null);
+    }
+  };
 
-  // Get current page
-  const currentPage = pages.find(p => p.id === currentPageId);
+  const addSection = (pageId: string, section: Section) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId
+          ? { ...page, sections: [...page.sections, section] }
+          : page
+      )
+    );
+  };
 
-  // Function to select an element
+  const updateSection = (pageId: string, sectionId: string, updatedSection: Partial<Section>) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId
+          ? {
+              ...page,
+              sections: page.sections.map((section) =>
+                section.id === sectionId
+                  ? { ...section, ...updatedSection }
+                  : section
+              ),
+            }
+          : page
+      )
+    );
+  };
+
+  const removeSection = (pageId: string, sectionId: string) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId
+          ? {
+              ...page,
+              sections: page.sections.filter(
+                (section) => section.id !== sectionId
+              ),
+            }
+          : page
+      )
+    );
+  };
+
+  const addElement = (pageId: string, sectionId: string, element: PageElement) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId
+          ? {
+              ...page,
+              sections: page.sections.map((section) =>
+                section.id === sectionId
+                  ? {
+                      ...section,
+                      elements: [...section.elements, element],
+                    }
+                  : section
+              ),
+            }
+          : page
+      )
+    );
+  };
+
+  const updateElement = (
+    pageId: string,
+    sectionId: string,
+    elementId: string,
+    updatedElement: Partial<PageElement>
+  ) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId
+          ? {
+              ...page,
+              sections: page.sections.map((section) =>
+                section.id === sectionId
+                  ? {
+                      ...section,
+                      elements: section.elements.map((element) =>
+                        element.id === elementId
+                          ? { ...element, ...updatedElement }
+                          : element
+                      ),
+                    }
+                  : section
+              ),
+            }
+          : page
+      )
+    );
+  };
+
+  const removeElement = (pageId: string, sectionId: string, elementId: string) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId
+          ? {
+              ...page,
+              sections: page.sections.map((section) =>
+                section.id === sectionId
+                  ? {
+                      ...section,
+                      elements: section.elements.filter(
+                        (element) => element.id !== elementId
+                      ),
+                    }
+                  : section
+              ),
+            }
+          : page
+      )
+    );
+  };
+
   const selectElement = (elementId: string | null) => {
     setSelectedElementId(elementId);
   };
 
-  // Function to get the selected element
-  const getSelectedElement = (): SelectedElementData | null => {
-    if (!selectedElementId || !currentPageId) return null;
-    
-    const page = pages.find(p => p.id === currentPageId);
-    if (!page) return null;
-    
-    for (const section of page.sections) {
-      const element = findElementInArray(section.elements, selectedElementId);
-      if (element) {
-        return {
-          pageId: currentPageId,
-          sectionId: section.id,
-          element
-        };
-      }
-    }
-    
-    return null;
-  };
-  
-  // Helper function to find an element in a nested array
-  const findElementInArray = (elements: PageElement[], elementId: string): PageElement | null => {
-    for (const element of elements) {
-      if (element.id === elementId) {
-        return element;
-      }
-      
-      if (element.children) {
-        const found = findElementInArray(element.children, elementId);
-        if (found) return found;
-      }
-    }
-    
-    return null;
-  };
+  const getSelectedElement = () => {
+    if (!selectedElementId) return null;
 
-  // Update page
-  const updatePage = (pageId: string, updates: Partial<Page>) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        return { ...page, ...updates };
-      }
-      return page;
-    }));
-  };
-  
-  // Add page
-  const addPage = (page: Page) => {
-    setPages(prevPages => [...prevPages, page]);
-    setCurrentPageId(page.id);
-  };
-  
-  // Remove page
-  const removePage = (pageId: string, redirectToPageId?: string) => {
-    setPages(prevPages => prevPages.filter(page => page.id !== pageId));
-    if (currentPageId === pageId && redirectToPageId) {
-      setCurrentPageId(redirectToPageId);
-    } else if (currentPageId === pageId && pages.length > 1) {
-      const otherPage = pages.find(page => page.id !== pageId);
-      if (otherPage) {
-        setCurrentPageId(otherPage.id);
-      }
-    }
-  };
-
-  // Add section
-  const addSection = (pageId: string, section: Section) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        return {
-          ...page,
-          sections: [...page.sections, section]
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Replace header section
-  const replaceHeaderSection = (pageId: string, section: Section) => {
-    section.type = 'header';
-    
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        // Remove existing header if any
-        const filteredSections = page.sections.filter(s => s.type !== 'header');
-        
-        // Add new header at the beginning
-        return {
-          ...page,
-          sections: [section, ...filteredSections]
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Replace footer section
-  const replaceFooterSection = (pageId: string, section: Section) => {
-    section.type = 'footer';
-    
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        // Remove existing footer if any
-        const filteredSections = page.sections.filter(s => s.type !== 'footer');
-        
-        // Add new footer at the end
-        return {
-          ...page,
-          sections: [...filteredSections, section]
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Update section
-  const updateSection = (pageId: string, sectionId: string, updates: Partial<Section>) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        return {
-          ...page,
-          sections: page.sections.map(section => {
-            if (section.id === sectionId) {
-              return { ...section, ...updates };
-            }
-            return section;
-          })
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Duplicate section
-  const duplicateSection = (pageId: string, sectionId: string) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        const sectionToDuplicate = page.sections.find(section => section.id === sectionId);
-        if (!sectionToDuplicate) return page;
-        
-        const newSection = {
-          ...JSON.parse(JSON.stringify(sectionToDuplicate)), // Deep clone
-          id: `section-${nanoid(6)}`,
-          elements: sectionToDuplicate.elements.map(element => ({
-            ...element,
-            id: `element-${nanoid(6)}`
-          }))
-        };
-        
-        // Find the index of the section to duplicate
-        const sectionIndex = page.sections.findIndex(section => section.id === sectionId);
-        
-        // Create a new array with the new section inserted after the original
-        const newSections = [...page.sections];
-        newSections.splice(sectionIndex + 1, 0, newSection);
-        
-        return {
-          ...page,
-          sections: newSections
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Move section up
-  const moveSectionUp = (pageId: string, sectionId: string) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        const sectionIndex = page.sections.findIndex(section => section.id === sectionId);
-        if (sectionIndex <= 0) return page; // Can't move up if it's the first section
-        
-        const newSections = [...page.sections];
-        const temp = newSections[sectionIndex];
-        newSections[sectionIndex] = newSections[sectionIndex - 1];
-        newSections[sectionIndex - 1] = temp;
-        
-        return {
-          ...page,
-          sections: newSections
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Move section down
-  const moveSectionDown = (pageId: string, sectionId: string) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        const sectionIndex = page.sections.findIndex(section => section.id === sectionId);
-        if (sectionIndex === -1 || sectionIndex >= page.sections.length - 1) return page; // Can't move down if it's the last section
-        
-        const newSections = [...page.sections];
-        const temp = newSections[sectionIndex];
-        newSections[sectionIndex] = newSections[sectionIndex + 1];
-        newSections[sectionIndex + 1] = temp;
-        
-        return {
-          ...page,
-          sections: newSections
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Remove section
-  const removeSection = (pageId: string, sectionId: string) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        return {
-          ...page,
-          sections: page.sections.filter(section => section.id !== sectionId)
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Add element to section
-  const addElement = (pageId: string, sectionId: string, element: PageElement) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        return {
-          ...page,
-          sections: page.sections.map(section => {
-            if (section.id === sectionId) {
-              return {
-                ...section,
-                elements: [...section.elements, element]
-              };
-            }
-            return section;
-          })
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Update element
-  const updateElement = (pageId: string, sectionId: string, elementId: string, updates: Partial<PageElement>) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        return {
-          ...page,
-          sections: page.sections.map(section => {
-            if (section.id === sectionId) {
-              return {
-                ...section,
-                elements: updateElementInArray(section.elements, elementId, updates)
-              };
-            }
-            return section;
-          })
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Helper function to update an element in a nested array
-  const updateElementInArray = (elements: PageElement[], elementId: string, updates: Partial<PageElement>): PageElement[] => {
-    return elements.map(element => {
-      if (element.id === elementId) {
-        return { ...element, ...updates };
-      }
-      
-      if (element.children) {
-        return {
-          ...element,
-          children: updateElementInArray(element.children, elementId, updates)
-        };
-      }
-      
-      return element;
-    });
-  };
-  
-  // Remove element
-  const removeElement = (pageId: string, sectionId: string, elementId: string) => {
-    setPages(prevPages => prevPages.map(page => {
-      if (page.id === pageId) {
-        return {
-          ...page,
-          sections: page.sections.map(section => {
-            if (section.id === sectionId) {
-              return {
-                ...section,
-                elements: removeElementFromArray(section.elements, elementId)
-              };
-            }
-            return section;
-          })
-        };
-      }
-      return page;
-    }));
-  };
-  
-  // Helper function to remove an element from a nested array
-  const removeElementFromArray = (elements: PageElement[], elementId: string): PageElement[] => {
-    return elements
-      .filter(element => element.id !== elementId)
-      .map(element => {
-        if (element.children) {
-          return {
-            ...element,
-            children: removeElementFromArray(element.children, elementId)
-          };
+    for (const page of pages) {
+      if (page.id === currentPageId) {
+        for (const section of page.sections) {
+          const element = section.elements.find(e => e.id === selectedElementId);
+          if (element) {
+            return { pageId: page.id, sectionId: section.id, element };
+          }
         }
-        return element;
-      });
-  };
-  
-  // Save changes to localStorage
-  const saveEditorChanges = async (): Promise<void> => {
-    return new Promise((resolve) => {
-      localStorage.setItem('pages', JSON.stringify(pages));
-      toast({
-        title: "Changes saved",
-        description: "Your changes have been saved locally.",
-      });
-      resolve();
-    });
+      }
+    }
+    
+    return null;
   };
 
-  // Publish changes
-  const publishChanges = async (): Promise<void> => {
-    return new Promise((resolve) => {
-      // Mark current page as published
-      if (currentPageId) {
-        setPages(prevPages => prevPages.map(page => {
-          if (page.id === currentPageId) {
+  const duplicateSection = (pageId: string, sectionId: string) => {
+    setPages((prevPages) =>
+      prevPages.map((page) => {
+        if (page.id === pageId) {
+          const sectionToDuplicate = page.sections.find(
+            (section) => section.id === sectionId
+          );
+
+          if (sectionToDuplicate) {
+            const sectionIndex = page.sections.findIndex(
+              (section) => section.id === sectionId
+            );
+
+            const duplicatedSection: Section = {
+              ...sectionToDuplicate,
+              id: `section-${Date.now()}`,
+              elements: sectionToDuplicate.elements.map(element => ({
+                ...element,
+                id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+              }))
+            };
+
+            const newSections = [...page.sections];
+            newSections.splice(sectionIndex + 1, 0, duplicatedSection);
+
             return {
               ...page,
-              isPublished: true,
-              updatedAt: new Date().toISOString()
+              sections: newSections
             };
           }
-          return page;
-        }));
+        }
+        return page;
+      })
+    );
+  };
+
+  const moveSectionUp = (pageId: string, sectionId: string) => {
+    setPages((prevPages) =>
+      prevPages.map((page) => {
+        if (page.id === pageId) {
+          const sectionIndex = page.sections.findIndex(
+            (section) => section.id === sectionId
+          );
+
+          if (sectionIndex > 0) {
+            const newSections = [...page.sections];
+            const temp = newSections[sectionIndex - 1];
+            newSections[sectionIndex - 1] = newSections[sectionIndex];
+            newSections[sectionIndex] = temp;
+
+            return {
+              ...page,
+              sections: newSections
+            };
+          }
+        }
+        return page;
+      })
+    );
+  };
+
+  const moveSectionDown = (pageId: string, sectionId: string) => {
+    setPages((prevPages) =>
+      prevPages.map((page) => {
+        if (page.id === pageId) {
+          const sectionIndex = page.sections.findIndex(
+            (section) => section.id === sectionId
+          );
+
+          if (sectionIndex < page.sections.length - 1) {
+            const newSections = [...page.sections];
+            const temp = newSections[sectionIndex + 1];
+            newSections[sectionIndex + 1] = newSections[sectionIndex];
+            newSections[sectionIndex] = temp;
+
+            return {
+              ...page,
+              sections: newSections
+            };
+          }
+        }
+        return page;
+      })
+    );
+  };
+
+  const publishPage = (pageId: string) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId
+          ? { ...page, isPublished: true, publishedAt: new Date().toISOString() }
+          : page
+      )
+    );
+  };
+
+  const unpublishPage = (pageId: string) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.id === pageId ? { ...page, isPublished: false } : page
+      )
+    );
+  };
+
+  const replaceHeaderSection = (pageId: string, newHeaderSection: Section) => {
+    setPages((prevPages) =>
+      prevPages.map((page) => {
+        if (page.id === pageId) {
+          const headerIndex = page.sections.findIndex(section => section.type === 'header');
+          const updatedSections = [...page.sections];
+          
+          const sectionWithType: Section = { 
+            ...newHeaderSection, 
+            type: 'header' as SectionType 
+          };
+          
+          if (headerIndex >= 0) {
+            updatedSections[headerIndex] = sectionWithType;
+          } else {
+            updatedSections.unshift(sectionWithType);
+          }
+          
+          return {
+            ...page,
+            sections: updatedSections
+          };
+        }
+        return page;
+      })
+    );
+  };
+
+  const replaceFooterSection = (pageId: string, newFooterSection: Section) => {
+    setPages((prevPages) =>
+      prevPages.map((page) => {
+        if (page.id === pageId) {
+          const footerIndex = page.sections.findIndex(section => section.type === 'footer');
+          const updatedSections = [...page.sections];
+          
+          const sectionWithType: Section = { 
+            ...newFooterSection, 
+            type: 'footer' as SectionType 
+          };
+          
+          if (footerIndex >= 0) {
+            updatedSections[footerIndex] = sectionWithType;
+          } else {
+            updatedSections.push(sectionWithType);
+          }
+          
+          return {
+            ...page,
+            sections: updatedSections
+          };
+        }
+        return page;
+      })
+    );
+  };
+
+  const updateNavigation = (items: MenuItem[]) => {
+    const sortedItems = [...items].sort((a, b) => a.order - b.order);
+    setNavigation(sortedItems);
+  };
+
+  const saveEditorChanges = async (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      try {
+        localStorage.setItem('websiteBuilder_pages', JSON.stringify(pages));
+        localStorage.setItem('websiteBuilder_navigation', JSON.stringify(navigation));
+        
+        setTimeout(() => {
+          console.log('Changes saved successfully');
+          resolve();
+        }, 1000);
+      } catch (error) {
+        console.error('Error saving changes:', error);
+        reject(error);
       }
-      
-      // Save to localStorage
-      localStorage.setItem('pages', JSON.stringify(pages));
-      
-      toast({
-        title: "Published successfully",
-        description: "Your page has been published successfully.",
-      });
-      resolve();
     });
   };
 
-  // Set edit mode wrapper
-  const setEditMode = (isEdit: boolean) => {
-    setIsEditMode(isEdit);
+  useEffect(() => {
+    try {
+      const savedPages = localStorage.getItem('websiteBuilder_pages');
+      const savedNavigation = localStorage.getItem('websiteBuilder_navigation');
+      
+      if (savedPages) {
+        setPages(JSON.parse(savedPages));
+      }
+      
+      if (savedNavigation) {
+        setNavigation(JSON.parse(savedNavigation));
+      }
+    } catch (error) {
+      console.error('Error loading saved data:', error);
+    }
+  }, []);
+
+  const value = {
+    pages,
+    currentPageId,
+    isEditMode,
+    selectedElementId,
+    userRole,
+    navigation,
+    addPage,
+    removePage,
+    setCurrentPageId,
+    updatePage,
+    toggleEditMode,
+    addSection,
+    updateSection,
+    removeSection,
+    addElement,
+    updateElement,
+    removeElement,
+    selectElement,
+    duplicateSection,
+    moveSectionUp,
+    moveSectionDown,
+    getSelectedElement,
+    setUserRole,
+    publishPage,
+    unpublishPage,
+    replaceHeaderSection,
+    replaceFooterSection,
+    updateNavigation,
+    saveEditorChanges
   };
 
   return (
-    <EditorContext.Provider
-      value={{
-        pages,
-        currentPageId,
-        setCurrentPageId,
-        isEditMode,
-        setEditMode,
-        userRole,
-        updatePage,
-        addPage,
-        removePage,
-        addSection,
-        replaceHeaderSection,
-        replaceFooterSection,
-        updateSection,
-        removeSection,
-        addElement,
-        updateElement,
-        removeElement,
-        selectedElementId,
-        setSelectedElementId,
-        getSelectedElement,
-        saveEditorChanges,
-        currentPage,
-        selectElement,
-        duplicateSection,
-        moveSectionUp,
-        moveSectionDown,
-        publishChanges,
-      }}
-    >
-      {children}
-    </EditorContext.Provider>
+    <EditorContext.Provider value={value}>{children}</EditorContext.Provider>
   );
 };
 
-// Custom hook for using the editor context
 export const useEditor = () => {
   const context = useContext(EditorContext);
   if (context === undefined) {
     throw new Error('useEditor must be used within an EditorProvider');
   }
   return context;
+};
+
+const defaultNavigation: MenuItem[] = [
+  {
+    id: 'home-link',
+    title: 'Home',
+    url: '/',
+    order: 0
+  },
+  {
+    id: 'about-link',
+    title: 'About',
+    url: '/about',
+    order: 1
+  },
+  {
+    id: 'services-link',
+    title: 'Services',
+    url: '/services',
+    order: 2
+  },
+  {
+    id: 'contact-link',
+    title: 'Contact',
+    url: '/contact',
+    order: 3
+  }
+];
+
+const defaultHomePage: Page = {
+  id: 'home-page',
+  title: 'Home',
+  slug: '/',
+  isPublished: true,
+  publishedAt: new Date().toISOString(),
+  sections: [
+    {
+      id: 'header-section',
+      type: 'header',
+      properties: {
+        backgroundColor: 'bg-white',
+        paddingY: 'py-4',
+        paddingX: 'px-4'
+      },
+      elements: [
+        {
+          id: 'header-logo',
+          type: 'image',
+          content: '/placeholder.svg',
+          properties: {
+            className: 'h-10 w-auto'
+          }
+        },
+        {
+          id: 'header-title',
+          type: 'heading',
+          content: 'My Website',
+          properties: {
+            className: 'text-xl font-bold'
+          }
+        }
+      ],
+    },
+    {
+      id: 'hero-section',
+      type: 'content',
+      properties: {
+        backgroundColor: 'bg-gradient-to-r from-editor-blue to-editor-purple',
+        paddingY: 'py-20',
+        paddingX: 'px-4'
+      },
+      elements: [
+        {
+          id: 'hero-heading',
+          type: 'heading',
+          content: 'Buat Website Impian Anda dengan Editor Visual',
+          properties: {
+            className: 'text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-6'
+          }
+        },
+        {
+          id: 'hero-text',
+          type: 'text',
+          content: 'Edit konten, gambar, dan tata letak website Anda tanpa perlu reload halaman.',
+          properties: {
+            className: 'text-lg md:text-xl text-white text-center max-w-3xl mx-auto mb-8'
+          }
+        },
+        {
+          id: 'hero-button',
+          type: 'button',
+          content: 'Coba Sekarang',
+          properties: {
+            className: 'bg-white text-editor-blue hover:bg-gray-100 px-6 py-3 rounded-lg font-medium text-lg mx-auto block'
+          }
+        }
+      ],
+    },
+    {
+      id: 'features-section',
+      type: 'content',
+      properties: {
+        backgroundColor: 'bg-white',
+        paddingY: 'py-16',
+        paddingX: 'px-4',
+        isGridLayout: true,
+        gridColumns: 'grid-cols-1 md:grid-cols-3',
+        gridRows: 'auto',
+        gridGap: 'gap-8'
+      },
+      elements: [
+        {
+          id: 'features-heading',
+          type: 'heading',
+          content: 'Fitur Unggulan',
+          properties: {
+            className: 'text-3xl md:text-4xl font-bold text-center mb-12 col-span-full'
+          },
+          gridPosition: {
+            column: 'col-span-full',
+            row: 'row-start-1',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-1-image',
+          type: 'image',
+          content: '/placeholder.svg',
+          properties: {
+            className: 'w-16 h-16 mx-auto mb-4'
+          },
+          gridPosition: {
+            column: 'md:col-start-1',
+            row: 'row-start-2',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-1-heading',
+          type: 'heading',
+          content: 'Editor Visual',
+          properties: {
+            className: 'text-xl font-semibold text-center mb-2'
+          },
+          gridPosition: {
+            column: 'md:col-start-1',
+            row: 'row-start-3',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-1-text',
+          type: 'text',
+          content: 'Edit tampilan website secara visual, langsung melihat hasilnya tanpa perlu reload halaman.',
+          properties: {
+            className: 'text-gray-600 text-center max-w-md mx-auto mb-12'
+          },
+          gridPosition: {
+            column: 'md:col-start-1',
+            row: 'row-start-4',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-2-image',
+          type: 'image',
+          content: '/placeholder.svg',
+          properties: {
+            className: 'w-16 h-16 mx-auto mb-4'
+          },
+          gridPosition: {
+            column: 'md:col-start-2',
+            row: 'row-start-2',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-2-heading',
+          type: 'heading',
+          content: 'Section Builder',
+          properties: {
+            className: 'text-xl font-semibold text-center mb-2'
+          },
+          gridPosition: {
+            column: 'md:col-start-2',
+            row: 'row-start-3',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-2-text',
+          type: 'text',
+          content: 'Tambahkan dan atur section baru dengan mudah untuk memperkaya konten website Anda.',
+          properties: {
+            className: 'text-gray-600 text-center max-w-md mx-auto mb-12'
+          },
+          gridPosition: {
+            column: 'md:col-start-2',
+            row: 'row-start-4',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-3-image',
+          type: 'image',
+          content: '/placeholder.svg',
+          properties: {
+            className: 'w-16 h-16 mx-auto mb-4'
+          },
+          gridPosition: {
+            column: 'md:col-start-3',
+            row: 'row-start-2',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-3-heading',
+          type: 'heading',
+          content: 'Multi Page Management',
+          properties: {
+            className: 'text-xl font-semibold text-center mb-2'
+          },
+          gridPosition: {
+            column: 'md:col-start-3',
+            row: 'row-start-3',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        },
+        {
+          id: 'feature-3-text',
+          type: 'text',
+          content: 'Buat dan kelola banyak halaman untuk website lengkap dengan navigasi yang intuitif.',
+          properties: {
+            className: 'text-gray-600 text-center max-w-md mx-auto'
+          },
+          gridPosition: {
+            column: 'md:col-start-3',
+            row: 'row-start-4',
+            columnSpan: '',
+            rowSpan: ''
+          }
+        }
+      ],
+    },
+    {
+      id: 'cta-section',
+      type: 'content',
+      properties: {
+        backgroundColor: 'bg-editor-indigo',
+        paddingY: 'py-16',
+        paddingX: 'px-4'
+      },
+      elements: [
+        {
+          id: 'cta-heading',
+          type: 'heading',
+          content: 'Siap Untuk Membangun Website Anda?',
+          properties: {
+            className: 'text-3xl md:text-4xl font-bold text-white text-center mb-6'
+          }
+        },
+        {
+          id: 'cta-text',
+          type: 'text',
+          content: 'Mulai sekarang dan nikmati kemudahan membuat website profesional.',
+          properties: {
+            className: 'text-lg text-white text-center max-w-2xl mx-auto mb-8'
+          }
+        },
+        {
+          id: 'cta-button',
+          type: 'button',
+          content: 'Daftar Gratis',
+          properties: {
+            className: 'bg-white text-editor-indigo hover:bg-gray-100 px-6 py-3 rounded-lg font-medium text-lg mx-auto block'
+          }
+        }
+      ],
+    },
+    {
+      id: 'footer-section',
+      type: 'footer',
+      properties: {
+        backgroundColor: 'bg-gray-800',
+        paddingY: 'py-8',
+        paddingX: 'px-4'
+      },
+      elements: [
+        {
+          id: 'footer-text',
+          type: 'text',
+          content: '© 2025 Website Builder. All rights reserved.',
+          properties: {
+            className: 'text-gray-400 text-center'
+          }
+        }
+      ],
+    }
+  ],
 };
