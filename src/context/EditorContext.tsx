@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section';
@@ -109,7 +108,6 @@ export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [userRole, setUserRole] = useState<UserRole>('viewer');
   const [navigation, setNavigation] = useState<MenuItem[]>(defaultNavigation);
 
-  // Get the current page based on currentPageId
   const currentPage = pages.find(page => page.id === currentPageId) || null;
 
   const addPage = (page: Page) => {
@@ -151,7 +149,6 @@ export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  // Add setEditMode function
   const setEditMode = (value: boolean) => {
     setIsEditMode(value);
     if (!value) {
@@ -475,7 +472,6 @@ export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
   };
 
-  // Add publishChanges function
   const publishChanges = () => {
     if (currentPage) {
       publishPage(currentPage.id);
@@ -554,7 +550,6 @@ export const useEditor = () => {
   return context;
 };
 
-// Fix the type error by ensuring isDraggableGrid is a string type
 const defaultNavigation: MenuItem[] = [
   {
     id: 'home-link',
@@ -596,7 +591,7 @@ const defaultHomePage: Page = {
         backgroundColor: 'bg-white',
         paddingY: 'py-4',
         paddingX: 'px-4',
-        isDraggableGrid: 'false' // Fix: Use string instead of boolean
+        isDraggableGrid: 'false'
       },
       elements: [
         {
@@ -659,7 +654,7 @@ const defaultHomePage: Page = {
         backgroundColor: 'bg-white',
         paddingY: 'py-16',
         paddingX: 'px-4',
-        isGridLayout: true,
+        isGridLayout: 'true',
         gridColumns: 'grid-cols-1 md:grid-cols-3',
         gridRows: 'auto',
         gridGap: 'gap-8'
@@ -863,4 +858,3 @@ const defaultHomePage: Page = {
     }
   ],
 };
-
