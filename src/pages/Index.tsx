@@ -1,11 +1,11 @@
 
 import React, { useEffect } from 'react';
-import { useEditor } from '@/context/EditorContext';
-import { useToast } from '@/hooks/use-toast';
-import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import PageRenderer from '@/components/PageRenderer';
 import EditorSidebar from '@/components/EditorSidebar';
+import { useEditor } from '@/context/EditorContext';
+import { useToast } from '@/hooks/use-toast';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const { isEditMode, saveEditorChanges, pages, setCurrentPageId, currentPageId } = useEditor();
@@ -16,7 +16,7 @@ const Index = () => {
   // Set current page based on URL path (slug)
   useEffect(() => {
     const currentPath = location.pathname;
-    const matchingPage = pages.find(page => page.slug === currentPath);
+    let matchingPage = pages.find(page => page.slug === currentPath);
     
     if (matchingPage) {
       setCurrentPageId(matchingPage.id);
@@ -41,7 +41,7 @@ const Index = () => {
         }
       }
     }
-  }, [location.pathname, pages, setCurrentPageId, isEditMode, navigate]);
+  }, [location.pathname, pages, setCurrentPageId, isEditMode]);
 
   // Update URL when current page changes, but only if not in edit mode
   // This prevents navigation away from the current page during editing
@@ -91,7 +91,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className={`transition-all duration-300 ${isEditMode ? 'mr-72' : ''}`}>
+      <main className={isEditMode ? 'mr-72' : ''}>
         <PageRenderer />
       </main>
       <EditorSidebar />
