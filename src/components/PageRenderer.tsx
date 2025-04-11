@@ -1,96 +1,116 @@
 
 import React from 'react';
 import { useEditor } from '@/context/EditorContext';
-import { PageElement } from '@/context/EditorContext';
+import EditableSection from './EditableSection';
+import { Trash2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
-const PageRenderer = () => {
-  const { currentPage, isEditMode, selectedElementId, setSelectedElementId } = useEditor();
-
+const PageRenderer: React.FC = () => {
+  const { pages, currentPageId, updatePage, isEditMode, userRole, removePage } = useEditor();
+  const { toast } = useToast();
+  
+  const currentPage = pages.find(page => page.id === currentPageId);
+  const canEdit = userRole === 'admin' || userRole === 'editor';
+  const isAdmin = userRole === 'admin';
+  
   if (!currentPage) {
-    return (
-      <div className="container py-8 text-center">
-        <h1 className="text-2xl font-bold">Page not found</h1>
-        <p>The requested page could not be found.</p>
-      </div>
-    );
+    return <div className="p-8 text-center text-red-500">Page not found</div>;
   }
 
-  const renderElement = (element: PageElement) => {
-    const isSelected = selectedElementId === element.id;
+  // Separate sections by type, but don't render header section
+  const footerSection = currentPage.sections.find(section => section.type === 'footer');
+  const contentSections = currentPage.sections.filter(
+    section => (section.type === 'content' || !section.type)
+  );
+  
+  const handlePageTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updatePage(currentPageId, { title: e.target.value });
+  };
+  
+  const handlePageSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updatePage(currentPageId, { slug: e.target.value });
+  };
+  
+  const handleDeletePage = () => {
+    if (pages.length <= 1) {
+      toast({
+        title: "Cannot Delete Page",
+        description: "You must have at least one page in your site.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    const commonProps = {
-      key: element.id,
-      onClick: isEditMode ? 
-        (e: React.MouseEvent) => {
-          e.stopPropagation();
-          setSelectedElementId(element.id);
-        } : undefined,
-      className: `${isEditMode ? 'outline-dashed outline-1 outline-transparent hover:outline-gray-300' : ''} 
-                 ${isSelected ? '!outline-blue-500 !outline-2' : ''}
-                 ${element.attributes?.className || ''}`
-    };
-
-    switch (element.type) {
-      case 'heading':
-        const level = element.attributes?.level || '2';
-        const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
-        return (
-          <HeadingTag {...commonProps}>
-            {element.content}
-          </HeadingTag>
-        );
-        
-      case 'text':
-        return (
-          <p {...commonProps}>
-            {element.content}
-          </p>
-        );
-        
-      case 'image':
-        return (
-          <img 
-            src={element.content} 
-            {...commonProps}
-            alt={element.attributes?.alt || ""}
-          />
-        );
-        
-      case 'button':
-        return (
-          <button
-            {...commonProps}
-            type="button"
-          >
-            {element.content}
-          </button>
-        );
-        
-      case 'link':
-        return (
-          <a 
-            {...commonProps}
-            href={element.attributes?.href || '#'}
-          >
-            {element.content}
-          </a>
-        );
-        
-      case 'container':
-        return (
-          <div {...commonProps}>
-            {element.children?.map(childElement => renderElement(childElement))}
-          </div>
-        );
-        
-      default:
-        return null;
+    // Find another page to navigate to
+    const otherPage = pages.find(page => page.id !== currentPageId);
+    if (otherPage) {
+      removePage(currentPageId, otherPage.id);
+      toast({
+        title: "Page Deleted",
+        description: `The page "${currentPage.title}" has been deleted.`,
+        variant: "default",
+      });
     }
   };
-
+  
   return (
-    <div className="container py-8" onClick={() => isEditMode && setSelectedElementId(null)}>
-      {currentPage.elements.map(element => renderElement(element))}
+    <div className="min-h-screen flex flex-col">
+      {isEditMode && canEdit && (
+        <div className="bg-gray-100 p-2 border-b border-gray-200">
+          <div className="container mx-auto flex items-center flex-wrap gap-2">
+            <div className="flex items-center">
+              <span className="text-sm font-medium mr-2">Page Title:</span>
+              <input
+                type="text"
+                value={currentPage.title}
+                onChange={handlePageTitleChange}
+                className="px-2 py-1 text-sm border rounded"
+              />
+            </div>
+            
+            <div className="flex items-center">
+              <span className="text-sm font-medium mr-2">Slug:</span>
+              <input
+                type="text"
+                value={currentPage.slug}
+                onChange={handlePageSlugChange}
+                className="px-2 py-1 text-sm border rounded"
+              />
+            </div>
+            
+            {isAdmin && (
+              <button
+                onClick={handleDeletePage}
+                className="ml-auto flex items-center px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm"
+                title="Delete this page"
+              >
+                <Trash2 size={14} className="mr-1" />
+                Delete Page
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Content Sections */}
+      <div className="flex-grow">
+        {contentSections.map((section) => (
+          <EditableSection 
+            key={section.id}
+            section={section}
+            pageId={currentPage.id}
+          />
+        ))}
+      </div>
+      
+      {/* Render Footer */}
+      {footerSection && (
+        <EditableSection 
+          key={footerSection.id}
+          section={footerSection}
+          pageId={currentPage.id}
+        />
+      )}
     </div>
   );
 };
