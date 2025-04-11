@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Section } from '@/context/EditorContext';
 import { useEditor } from '@/context/EditorContext';
 import EditableElement from './EditableElement';
 import { cn } from '@/lib/utils';
-import { ArrowUp, ArrowDown, Copy, Trash2, LayoutGrid, MoveVertical } from 'lucide-react';
+import { ArrowUp, ArrowDown, Copy, Trash2, LayoutGrid, MoveVertical, Image, Palette } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import {
   Select,
@@ -12,6 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { toast } from "sonner";
 
 interface EditableSectionProps {
   section: Section;
@@ -54,6 +61,37 @@ const HEIGHT_OPTIONS = [
   { value: 'min-h-[600px]', label: 'Min 600px' },
 ];
 
+const BACKGROUND_COLORS = [
+  { value: 'bg-white', label: 'White' },
+  { value: 'bg-gray-50', label: 'Light Gray' },
+  { value: 'bg-gray-100', label: 'Gray' },
+  { value: 'bg-gray-200', label: 'Medium Gray' },
+  { value: 'bg-gray-800', label: 'Dark Gray' },
+  { value: 'bg-black', label: 'Black' },
+  { value: 'bg-editor-blue', label: 'Blue' },
+  { value: 'bg-editor-purple', label: 'Purple' },
+  { value: 'bg-editor-indigo', label: 'Indigo' },
+  { value: 'bg-red-500', label: 'Red' },
+  { value: 'bg-green-500', label: 'Green' },
+  { value: 'bg-yellow-500', label: 'Yellow' },
+  { value: 'bg-blue-500', label: 'Bright Blue' },
+  { value: 'bg-purple-500', label: 'Bright Purple' },
+  { value: 'bg-pink-500', label: 'Pink' },
+  { value: 'bg-orange-500', label: 'Orange' },
+];
+
+const BACKGROUND_GRADIENTS = [
+  { value: 'bg-gradient-to-r from-editor-blue to-editor-purple', label: 'Blue to Purple' },
+  { value: 'bg-gradient-to-r from-blue-500 to-purple-500', label: 'Bright Blue to Purple' },
+  { value: 'bg-gradient-to-r from-green-500 to-blue-500', label: 'Green to Blue' },
+  { value: 'bg-gradient-to-r from-yellow-500 to-red-500', label: 'Yellow to Red' },
+  { value: 'bg-gradient-to-r from-red-500 to-pink-500', label: 'Red to Pink' },
+  { value: 'bg-gradient-to-r from-purple-500 to-pink-500', label: 'Purple to Pink' },
+  { value: 'bg-gradient-to-b from-white to-gray-100', label: 'White to Gray' },
+  { value: 'bg-gradient-to-b from-gray-100 to-gray-300', label: 'Light Gradient' },
+  { value: 'bg-gradient-to-b from-gray-700 to-gray-900', label: 'Dark Gradient' },
+];
+
 const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) => {
   const { 
     isEditMode, 
@@ -69,6 +107,7 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
   
   const [showGridSettings, setShowGridSettings] = useState(false);
   const [showSectionSettings, setShowSectionSettings] = useState(false);
+  const [showBackgroundSettings, setShowBackgroundSettings] = useState(false);
   
   const canEdit = userRole === 'admin' || userRole === 'editor';
 
@@ -145,6 +184,56 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     });
   };
 
+  const handleBackgroundColorChange = (value: string) => {
+    updateSection(pageId, section.id, {
+      properties: {
+        ...section.properties,
+        backgroundColor: value,
+        backgroundImage: undefined,
+        backgroundSize: undefined,
+        backgroundPosition: undefined,
+        backgroundBlendMode: undefined
+      }
+    });
+    toast.success("Background color updated");
+  };
+
+  const handleBackgroundGradientChange = (value: string) => {
+    updateSection(pageId, section.id, {
+      properties: {
+        ...section.properties,
+        backgroundColor: value,
+        backgroundImage: undefined,
+        backgroundSize: undefined,
+        backgroundPosition: undefined,
+        backgroundBlendMode: undefined
+      }
+    });
+    toast.success("Background gradient updated");
+  };
+
+  const handleBackgroundImageChange = (value: string) => {
+    updateSection(pageId, section.id, {
+      properties: {
+        ...section.properties,
+        backgroundImage: `url(${value})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundBlendMode: 'normal'
+      }
+    });
+    toast.success("Background image updated");
+  };
+
+  const handleBackgroundOverlayChange = (value: string) => {
+    updateSection(pageId, section.id, {
+      properties: {
+        ...section.properties,
+        backgroundOverlay: value
+      }
+    });
+  };
+
   const handleGridTypeChange = (gridType: string) => {
     const selectedGrid = GRID_OPTIONS.find(option => option.value === gridType);
     
@@ -152,11 +241,11 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
       updateSection(pageId, section.id, {
         properties: {
           ...section.properties,
-          isGridLayout: true,
+          isGridLayout: "true",
           gridType: gridType,
           gridColumns: selectedGrid.columns,
           gridRows: selectedGrid.rows,
-          isDraggableGrid: true
+          isDraggableGrid: "true"
         }
       });
     }
@@ -166,11 +255,11 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     updateSection(pageId, section.id, {
       properties: {
         ...section.properties,
-        isGridLayout: section.properties?.isGridLayout ? 'false' : 'true',
+        isGridLayout: section.properties?.isGridLayout === "true" ? "false" : "true",
         gridColumns: section.properties?.gridColumns || 'grid-cols-1 md:grid-cols-3',
         gridRows: section.properties?.gridRows || 'auto',
         gridGap: section.properties?.gridGap || 'gap-4',
-        isDraggableGrid: section.properties?.isGridLayout ? section.properties?.isDraggableGrid : 'true'
+        isDraggableGrid: section.properties?.isGridLayout === "true" ? section.properties?.isDraggableGrid : "true"
       }
     });
   };
@@ -179,7 +268,7 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     updateSection(pageId, section.id, {
       properties: {
         ...section.properties,
-        isDraggableGrid: section.properties?.isDraggableGrid === 'true' ? 'false' : 'true'
+        isDraggableGrid: section.properties?.isDraggableGrid === "true" ? "false" : "true"
       }
     });
   };
@@ -224,8 +313,8 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     }
   };
 
-  const isGridLayout = section.properties?.isGridLayout === 'true';
-  const isDraggableGrid = section.properties?.isDraggableGrid === 'true';
+  const isGridLayout = section.properties?.isGridLayout === "true";
+  const isDraggableGrid = section.properties?.isDraggableGrid === "true";
   const currentHeight = section.properties?.height || 'auto';
   const currentGridType = section.properties?.gridType || '1x1';
 
@@ -271,6 +360,14 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     }
   };
 
+  // Determine background style
+  const sectionStyle = {
+    backgroundImage: section.properties?.backgroundImage,
+    backgroundSize: section.properties?.backgroundSize,
+    backgroundPosition: section.properties?.backgroundPosition,
+    backgroundBlendMode: section.properties?.backgroundBlendMode as any,
+  };
+
   return (
     <div
       className={cn(
@@ -279,9 +376,11 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
         section.properties?.paddingY || 'py-8',
         section.properties?.paddingX || 'px-4',
         section.properties?.height || 'auto',
+        section.properties?.backgroundOverlay,
         section.type === 'header' && 'sticky top-0 z-50',
         section.type === 'footer' && 'mt-auto'
       )}
+      style={sectionStyle}
     >
       <div 
         className={cn(
@@ -373,6 +472,16 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
               <Copy size={16} />
             </button>
             <button
+              onClick={() => setShowBackgroundSettings(!showBackgroundSettings)}
+              className={cn(
+                "p-1 hover:bg-gray-100",
+                showBackgroundSettings ? "text-editor-blue" : ""
+              )}
+              title="Background Settings"
+            >
+              <Palette size={16} />
+            </button>
+            <button
               onClick={() => setShowSectionSettings(!showSectionSettings)}
               className={cn(
                 "p-1 hover:bg-gray-100",
@@ -420,6 +529,89 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {showBackgroundSettings && (
+            <div className="absolute top-12 right-2 bg-white shadow-xl rounded-md p-4 z-50 w-80">
+              <h4 className="font-medium mb-3">Background Settings</h4>
+              
+              <div className="space-y-4">
+                <div>
+                  <h5 className="text-sm font-medium mb-2">Background Color</h5>
+                  <div className="grid grid-cols-4 gap-2">
+                    {BACKGROUND_COLORS.slice(0, 8).map((color) => (
+                      <button
+                        key={color.value}
+                        onClick={() => handleBackgroundColorChange(color.value)}
+                        className={`h-6 w-full rounded ${color.value} border border-gray-200`}
+                        title={color.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h5 className="text-sm font-medium mb-2">Background Gradients</h5>
+                  <div className="grid grid-cols-2 gap-2">
+                    {BACKGROUND_GRADIENTS.slice(0, 6).map((gradient) => (
+                      <button
+                        key={gradient.value}
+                        onClick={() => handleBackgroundGradientChange(gradient.value)}
+                        className={`h-6 w-full rounded ${gradient.value} border border-gray-200`}
+                        title={gradient.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="text-sm font-medium mb-2">Background Images</h5>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button 
+                      className="h-12 w-full bg-cover bg-center rounded border border-gray-200"
+                      style={{ backgroundImage: 'url(/placeholder.svg)' }}
+                      onClick={() => handleBackgroundImageChange('/placeholder.svg')}
+                    />
+                    <button 
+                      className="h-12 w-full bg-cover bg-center rounded border border-gray-200"
+                      style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1488972685288-c3fd157d7c7a?auto=format&fit=crop&w=300)' }}
+                      onClick={() => handleBackgroundImageChange('https://images.unsplash.com/photo-1488972685288-c3fd157d7c7a?auto=format&fit=crop&w=1200')}
+                    />
+                    <button 
+                      className="h-12 w-full bg-cover bg-center rounded border border-gray-200"
+                      style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=300)' }}
+                      onClick={() => handleBackgroundImageChange('https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200')}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <h5 className="text-sm font-medium mb-2">Background Overlay</h5>
+                  <div className="grid grid-cols-4 gap-2">
+                    <button
+                      onClick={() => handleBackgroundOverlayChange('')}
+                      className="h-6 w-full rounded bg-white border border-gray-200"
+                      title="None"
+                    />
+                    <button
+                      onClick={() => handleBackgroundOverlayChange('bg-black bg-opacity-25')}
+                      className="h-6 w-full rounded bg-black bg-opacity-25 border border-gray-200"
+                      title="Light Dark"
+                    />
+                    <button
+                      onClick={() => handleBackgroundOverlayChange('bg-black bg-opacity-50')}
+                      className="h-6 w-full rounded bg-black bg-opacity-50 border border-gray-200"
+                      title="Medium Dark"
+                    />
+                    <button
+                      onClick={() => handleBackgroundOverlayChange('bg-black bg-opacity-75')}
+                      className="h-6 w-full rounded bg-black bg-opacity-75 border border-gray-200"
+                      title="Heavy Dark"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -496,3 +688,4 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
 };
 
 export default EditableSection;
+

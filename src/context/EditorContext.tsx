@@ -39,12 +39,17 @@ export interface Section {
     paddingY?: string;
     paddingX?: string;
     height?: string;
-    isGridLayout?: boolean;
+    isGridLayout?: string;
     gridColumns?: string;
     gridRows?: string;
     gridGap?: string;
     gridType?: string;
-    isDraggableGrid?: boolean;
+    isDraggableGrid?: string;
+    backgroundImage?: string;
+    backgroundSize?: string;
+    backgroundPosition?: string;
+    backgroundBlendMode?: string;
+    backgroundOverlay?: string;
   };
   type?: SectionType;
 }
