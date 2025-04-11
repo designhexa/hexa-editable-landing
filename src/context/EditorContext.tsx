@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section';
@@ -70,11 +71,13 @@ interface EditorContextType {
   selectedElementId: string | null;
   userRole: UserRole;
   navigation: MenuItem[];
+  currentPage?: Page | null;
   addPage: (page: Page) => void;
   removePage: (pageId: string, newPageId: string) => void;
   setCurrentPageId: (id: string) => void;
   updatePage: (pageId: string, updatedPage: Partial<Page>) => void;
   toggleEditMode: () => void;
+  setEditMode: (value: boolean) => void;
   addSection: (pageId: string, section: Section) => void;
   updateSection: (pageId: string, sectionId: string, section: Partial<Section>) => void;
   removeSection: (pageId: string, sectionId: string) => void;
@@ -93,6 +96,7 @@ interface EditorContextType {
   replaceFooterSection: (pageId: string, newFooterSection: Section) => void;
   updateNavigation: (items: MenuItem[]) => void;
   saveEditorChanges: () => Promise<void>;
+  publishChanges: () => void;
 }
 
 export const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -104,6 +108,9 @@ export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('viewer');
   const [navigation, setNavigation] = useState<MenuItem[]>(defaultNavigation);
+
+  // Get the current page based on currentPageId
+  const currentPage = pages.find(page => page.id === currentPageId) || null;
 
   const addPage = (page: Page) => {
     setPages((prevPages) => [...prevPages, page]);
@@ -140,6 +147,14 @@ export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     setIsEditMode((prev) => !prev);
     if (isEditMode) {
+      setSelectedElementId(null);
+    }
+  };
+
+  // Add setEditMode function
+  const setEditMode = (value: boolean) => {
+    setIsEditMode(value);
+    if (!value) {
       setSelectedElementId(null);
     }
   };
@@ -460,6 +475,20 @@ export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
   };
 
+  // Add publishChanges function
+  const publishChanges = () => {
+    if (currentPage) {
+      publishPage(currentPage.id);
+      saveEditorChanges()
+        .then(() => {
+          console.log('Changes published successfully');
+        })
+        .catch((error) => {
+          console.error('Error publishing changes:', error);
+        });
+    }
+  };
+
   useEffect(() => {
     try {
       const savedPages = localStorage.getItem('websiteBuilder_pages');
@@ -484,11 +513,13 @@ export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     selectedElementId,
     userRole,
     navigation,
+    currentPage,
     addPage,
     removePage,
     setCurrentPageId,
     updatePage,
     toggleEditMode,
+    setEditMode,
     addSection,
     updateSection,
     removeSection,
@@ -506,7 +537,8 @@ export const EditorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     replaceHeaderSection,
     replaceFooterSection,
     updateNavigation,
-    saveEditorChanges
+    saveEditorChanges,
+    publishChanges
   };
 
   return (
@@ -522,6 +554,7 @@ export const useEditor = () => {
   return context;
 };
 
+// Fix the type error by ensuring isDraggableGrid is a string type
 const defaultNavigation: MenuItem[] = [
   {
     id: 'home-link',
@@ -562,7 +595,8 @@ const defaultHomePage: Page = {
       properties: {
         backgroundColor: 'bg-white',
         paddingY: 'py-4',
-        paddingX: 'px-4'
+        paddingX: 'px-4',
+        isDraggableGrid: 'false' // Fix: Use string instead of boolean
       },
       elements: [
         {
@@ -829,3 +863,4 @@ const defaultHomePage: Page = {
     }
   ],
 };
+
