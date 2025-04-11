@@ -157,6 +157,12 @@ interface EditorContextType {
   setSelectedElementId: (id: string | null) => void;
   getSelectedElement: () => SelectedElementData | null;
   saveEditorChanges: () => Promise<void>;
+  currentPage?: Page;
+  selectElement: (elementId: string | null) => void;
+  duplicateSection: (pageId: string, sectionId: string) => void;
+  moveSectionUp: (pageId: string, sectionId: string) => void;
+  moveSectionDown: (pageId: string, sectionId: string) => void;
+  publishChanges: () => Promise<void>;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -195,6 +201,14 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCurrentPageId(pages[0].id);
     }
   }, [pages, currentPageId]);
+
+  // Get current page
+  const currentPage = pages.find(p => p.id === currentPageId);
+
+  // Function to select an element
+  const selectElement = (elementId: string | null) => {
+    setSelectedElementId(elementId);
+  };
 
   // Function to get the selected element
   const getSelectedElement = (): SelectedElementData | null => {
@@ -331,6 +345,80 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }));
   };
   
+  // Duplicate section
+  const duplicateSection = (pageId: string, sectionId: string) => {
+    setPages(prevPages => prevPages.map(page => {
+      if (page.id === pageId) {
+        const sectionToDuplicate = page.sections.find(section => section.id === sectionId);
+        if (!sectionToDuplicate) return page;
+        
+        const newSection = {
+          ...JSON.parse(JSON.stringify(sectionToDuplicate)), // Deep clone
+          id: `section-${nanoid(6)}`,
+          elements: sectionToDuplicate.elements.map(element => ({
+            ...element,
+            id: `element-${nanoid(6)}`
+          }))
+        };
+        
+        // Find the index of the section to duplicate
+        const sectionIndex = page.sections.findIndex(section => section.id === sectionId);
+        
+        // Create a new array with the new section inserted after the original
+        const newSections = [...page.sections];
+        newSections.splice(sectionIndex + 1, 0, newSection);
+        
+        return {
+          ...page,
+          sections: newSections
+        };
+      }
+      return page;
+    }));
+  };
+  
+  // Move section up
+  const moveSectionUp = (pageId: string, sectionId: string) => {
+    setPages(prevPages => prevPages.map(page => {
+      if (page.id === pageId) {
+        const sectionIndex = page.sections.findIndex(section => section.id === sectionId);
+        if (sectionIndex <= 0) return page; // Can't move up if it's the first section
+        
+        const newSections = [...page.sections];
+        const temp = newSections[sectionIndex];
+        newSections[sectionIndex] = newSections[sectionIndex - 1];
+        newSections[sectionIndex - 1] = temp;
+        
+        return {
+          ...page,
+          sections: newSections
+        };
+      }
+      return page;
+    }));
+  };
+  
+  // Move section down
+  const moveSectionDown = (pageId: string, sectionId: string) => {
+    setPages(prevPages => prevPages.map(page => {
+      if (page.id === pageId) {
+        const sectionIndex = page.sections.findIndex(section => section.id === sectionId);
+        if (sectionIndex === -1 || sectionIndex >= page.sections.length - 1) return page; // Can't move down if it's the last section
+        
+        const newSections = [...page.sections];
+        const temp = newSections[sectionIndex];
+        newSections[sectionIndex] = newSections[sectionIndex + 1];
+        newSections[sectionIndex + 1] = temp;
+        
+        return {
+          ...page,
+          sections: newSections
+        };
+      }
+      return page;
+    }));
+  };
+  
   // Remove section
   const removeSection = (pageId: string, sectionId: string) => {
     setPages(prevPages => prevPages.map(page => {
@@ -452,6 +540,39 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   };
 
+  // Publish changes
+  const publishChanges = async (): Promise<void> => {
+    return new Promise((resolve) => {
+      // Mark current page as published
+      if (currentPageId) {
+        setPages(prevPages => prevPages.map(page => {
+          if (page.id === currentPageId) {
+            return {
+              ...page,
+              isPublished: true,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return page;
+        }));
+      }
+      
+      // Save to localStorage
+      localStorage.setItem('pages', JSON.stringify(pages));
+      
+      toast({
+        title: "Published successfully",
+        description: "Your page has been published successfully.",
+      });
+      resolve();
+    });
+  };
+
+  // Set edit mode wrapper
+  const setEditMode = (isEdit: boolean) => {
+    setIsEditMode(isEdit);
+  };
+
   return (
     <EditorContext.Provider
       value={{
@@ -476,6 +597,12 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setSelectedElementId,
         getSelectedElement,
         saveEditorChanges,
+        currentPage,
+        selectElement,
+        duplicateSection,
+        moveSectionUp,
+        moveSectionDown,
+        publishChanges,
       }}
     >
       {children}
