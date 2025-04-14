@@ -21,6 +21,7 @@ const MOCK_USERS = [
 // Define context type
 export type AuthContextType = {
   currentUser: User | null;
+  user: User | null; // Add user property (will be the same as currentUser for compatibility)
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -98,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     currentUser,
+    user: currentUser, // Set user as the same as currentUser for backward compatibility
     isAuthenticated: !!currentUser,
     login,
     logout,

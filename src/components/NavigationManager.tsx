@@ -13,7 +13,7 @@ interface NavigationItemProps {
 }
 
 const NavigationItem: React.FC<NavigationItemProps> = ({ item, index }) => {
-  const { updateNavigation } = useEditor();
+  const { updateNavigation, navigation } = useEditor();
   const [title, setTitle] = useState(item.title);
   const [url, setUrl] = useState(item.url);
   const { toast } = useToast();
@@ -27,11 +27,10 @@ const NavigationItem: React.FC<NavigationItemProps> = ({ item, index }) => {
   };
 
   const handleSave = () => {
-    updateNavigation((prevItems) => {
-      const updatedItems = [...prevItems];
-      updatedItems[index] = { ...item, title: title, url: url };
-      return updatedItems;
-    });
+    const updatedItems = [...navigation];
+    updatedItems[index] = { ...item, title: title, url: url };
+    updateNavigation(updatedItems);
+    
     toast({
       title: "Navigation Updated",
       description: `The navigation item "${title}" has been updated.`,
@@ -203,5 +202,4 @@ const NavigationManager: React.FC = () => {
   );
 };
 
-// Export the component
 export default NavigationManager;
