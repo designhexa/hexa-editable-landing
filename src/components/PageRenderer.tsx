@@ -52,7 +52,7 @@ const PageRenderer: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
       {isEditMode && canEdit && (
         <div className="bg-gray-100 p-2 border-b border-gray-200">
           <div className="container mx-auto flex items-center flex-wrap gap-2">

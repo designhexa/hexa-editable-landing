@@ -278,13 +278,13 @@ const EditorSidebar: React.FC = () => {
   const isMilestoneElement = selectedElementData && selectedElementData.element.type === 'milestone';
 
   return (
-    <div className="bg-white border-l shadow-lg fixed right-0 top-0 h-full w-72 z-10 overflow-hidden flex flex-col">
+    <div className="bg-white border-l shadow-lg fixed right-0 top-0 h-full w-72 z-50 overflow-hidden flex flex-col">
       <div className="p-4 border-b flex justify-between items-center bg-gray-50">
         <h2 className="font-medium text-xl">Page Editor</h2>
         <Button 
           onClick={handleSaveChanges} 
           size="sm" 
-          className="bg-editor-blue text-white hover:bg-editor-blue/90"
+          className="bg-blue-600 text-white hover:bg-blue-700"
           disabled={isSaving}
         >
           {isSaving ? (
@@ -315,7 +315,7 @@ const EditorSidebar: React.FC = () => {
                 <h3 className="font-medium">Pages</h3>
                 <Button 
                   onClick={handleAddPage}
-                  className="h-7 text-xs bg-editor-blue text-white px-2 py-1 rounded flex items-center"
+                  className="h-7 text-xs bg-blue-600 text-white px-2 py-1 rounded flex items-center"
                   disabled={!isAdmin}
                   title={!isAdmin ? "Only admins can add pages" : "Add a new page"}
                   variant="default"
@@ -331,7 +331,7 @@ const EditorSidebar: React.FC = () => {
                     key={page.id} 
                     className={cn(
                       "p-2 rounded mb-1 text-sm cursor-pointer",
-                      currentPageId === page.id ? "bg-editor-blue text-white" : "bg-white hover:bg-gray-100",
+                      currentPageId === page.id ? "bg-blue-600 text-white" : "bg-white hover:bg-gray-100",
                       !page.isPublished && "border-l-4 border-amber-300"
                     )}
                     onClick={() => setCurrentPageId(page.id)}
@@ -352,7 +352,7 @@ const EditorSidebar: React.FC = () => {
                 <h3 className="font-medium">Sections</h3>
                 <Button 
                   onClick={handleAddSection}
-                  className="h-7 text-xs bg-editor-blue text-white rounded flex items-center"
+                  className="h-7 text-xs bg-blue-600 text-white rounded flex items-center"
                   variant="default"
                   size="sm"
                 >
@@ -442,7 +442,7 @@ const EditorSidebar: React.FC = () => {
                         type: 'button',
                         content: 'Click Me',
                         properties: {
-                          className: 'bg-editor-blue text-white px-4 py-2 rounded-md hover:bg-blue-700'
+                          className: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700'
                         }
                       });
                     }
@@ -518,7 +518,7 @@ const EditorSidebar: React.FC = () => {
                     </TabsList>
                     
                     <TabsContent value="text" className="mt-2">
-                      {isTextElement && (
+                      {isTextElement && selectedElementData && (
                         <TextStyleEditor
                           element={selectedElementData.element}
                           pageId={selectedElementData.pageId}
@@ -588,16 +588,18 @@ const EditorSidebar: React.FC = () => {
                     </TabsContent>
                     
                     <TabsContent value="style" className="mt-2">
-                      <ElementStyleEditor
-                        element={selectedElementData.element}
-                        pageId={selectedElementData.pageId}
-                        sectionId={selectedElementData.sectionId}
-                      />
+                      {selectedElementData && (
+                        <ElementStyleEditor
+                          element={selectedElementData.element}
+                          pageId={selectedElementData.pageId}
+                          sectionId={selectedElementData.sectionId}
+                        />
+                      )}
                     </TabsContent>
                   </Tabs>
                 )}
                 
-                {!isTextElement && !isMilestoneElement && (
+                {!isTextElement && !isMilestoneElement && selectedElementData && (
                   <div className="mb-4">
                     <ElementStyleEditor
                       element={selectedElementData.element}

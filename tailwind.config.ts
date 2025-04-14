@@ -68,7 +68,9 @@ export default {
 					foreground: '#334155',
 					border: '#e2e8f0',
 					hover: '#f1f5f9',
-					selected: '#e0f2fe'
+					selected: '#e0f2fe',
+					blue: '#0078ff',
+					'blue-hover': '#0056b3'
 				}
 			},
 			borderRadius: {
