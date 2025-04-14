@@ -68,6 +68,32 @@ const LETTER_SPACINGS = [
   { value: 'tracking-widest', label: 'Widest' }
 ];
 
+const FONT_WEIGHTS = [
+  { value: 'font-thin', label: 'Thin - 100' },
+  { value: 'font-extralight', label: 'Extra Light - 200' },
+  { value: 'font-light', label: 'Light - 300' },
+  { value: 'font-normal', label: 'Normal - 400' },
+  { value: 'font-medium', label: 'Medium - 500' },
+  { value: 'font-semibold', label: 'Semibold - 600' },
+  { value: 'font-bold', label: 'Bold - 700' },
+  { value: 'font-extrabold', label: 'Extra Bold - 800' },
+  { value: 'font-black', label: 'Black - 900' }
+];
+
+const TEXT_DECORATIONS = [
+  { value: 'no-underline', label: 'None' },
+  { value: 'underline', label: 'Underline' },
+  { value: 'line-through', label: 'Line Through' },
+  { value: 'overline', label: 'Overline' }
+];
+
+const TEXT_TRANSFORMS = [
+  { value: 'normal-case', label: 'None' },
+  { value: 'uppercase', label: 'UPPERCASE' },
+  { value: 'lowercase', label: 'lowercase' },
+  { value: 'capitalize', label: 'Capitalize' }
+];
+
 export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({ element, pageId, sectionId }) => {
   const { updateElement } = useEditor();
   
@@ -98,6 +124,31 @@ export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({ element, pageI
       className.includes(spacing.value)
     )?.value || 'tracking-normal';
   };
+  
+  const getCurrentFontWeight = () => {
+    const className = element.properties?.className || '';
+    
+    // Check for font-bold specifically since it might be toggled separately
+    if (className.includes('font-bold')) return 'font-bold';
+    
+    return FONT_WEIGHTS.find(weight => 
+      className.includes(weight.value)
+    )?.value || 'font-normal';
+  };
+  
+  const getCurrentTextDecoration = () => {
+    const className = element.properties?.className || '';
+    return TEXT_DECORATIONS.find(decoration => 
+      className.includes(decoration.value)
+    )?.value || 'no-underline';
+  };
+  
+  const getCurrentTextTransform = () => {
+    const className = element.properties?.className || '';
+    return TEXT_TRANSFORMS.find(transform => 
+      className.includes(transform.value)
+    )?.value || 'normal-case';
+  };
 
   const updateTextStyle = (styleType: string, value: string) => {
     const currentClassName = element.properties?.className || '';
@@ -105,7 +156,7 @@ export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({ element, pageI
     
     switch (styleType) {
       case 'font':
-        regex = /font-\w+/g;
+        regex = /font-\w+(?!-)/g;
         break;
       case 'fontSize':
         regex = /text-xs|text-sm|text-base|text-lg|text-xl|text-2xl|text-3xl|text-4xl|text-5xl|text-6xl/g;
@@ -119,6 +170,15 @@ export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({ element, pageI
       case 'textAlign':
         regex = /text-left|text-center|text-right|text-justify/g;
         break;
+      case 'fontWeight':
+        regex = /font-thin|font-extralight|font-light|font-normal|font-medium|font-semibold|font-bold|font-extrabold|font-black/g;
+        break;
+      case 'textDecoration':
+        regex = /underline|line-through|overline|no-underline/g;
+        break;
+      case 'textTransform':
+        regex = /normal-case|uppercase|lowercase|capitalize/g;
+        break;
       default:
         regex = new RegExp('');
     }
@@ -127,7 +187,7 @@ export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({ element, pageI
     const cleanedClassName = currentClassName.replace(regex, '').trim();
     
     // Add new style class
-    const newClassName = `${cleanedClassName} ${value}`;
+    const newClassName = `${cleanedClassName} ${value}`.trim();
     
     updateElement(pageId, sectionId, element.id, {
       properties: {
@@ -275,6 +335,25 @@ export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({ element, pageI
       </div>
       
       <div>
+        <label className="block text-sm text-gray-500 mb-1">Font Weight</label>
+        <Select
+          value={getCurrentFontWeight()}
+          onValueChange={(value) => updateTextStyle('fontWeight', value)}
+        >
+          <SelectTrigger className="w-full h-8 text-xs">
+            <SelectValue placeholder="Select Weight" />
+          </SelectTrigger>
+          <SelectContent>
+            {FONT_WEIGHTS.map((weight) => (
+              <SelectItem key={weight.value} value={weight.value}>
+                {weight.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div>
         <label className="block text-sm text-gray-500 mb-1">Line Height</label>
         <Select
           value={getCurrentLineHeight()}
@@ -306,6 +385,44 @@ export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({ element, pageI
             {LETTER_SPACINGS.map((spacing) => (
               <SelectItem key={spacing.value} value={spacing.value}>
                 {spacing.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div>
+        <label className="block text-sm text-gray-500 mb-1">Text Decoration</label>
+        <Select
+          value={getCurrentTextDecoration()}
+          onValueChange={(value) => updateTextStyle('textDecoration', value)}
+        >
+          <SelectTrigger className="w-full h-8 text-xs">
+            <SelectValue placeholder="Select Decoration" />
+          </SelectTrigger>
+          <SelectContent>
+            {TEXT_DECORATIONS.map((decoration) => (
+              <SelectItem key={decoration.value} value={decoration.value}>
+                {decoration.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div>
+        <label className="block text-sm text-gray-500 mb-1">Text Transform</label>
+        <Select
+          value={getCurrentTextTransform()}
+          onValueChange={(value) => updateTextStyle('textTransform', value)}
+        >
+          <SelectTrigger className="w-full h-8 text-xs">
+            <SelectValue placeholder="Select Transform" />
+          </SelectTrigger>
+          <SelectContent>
+            {TEXT_TRANSFORMS.map((transform) => (
+              <SelectItem key={transform.value} value={transform.value}>
+                {transform.label}
               </SelectItem>
             ))}
           </SelectContent>

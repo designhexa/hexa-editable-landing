@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { useEditor } from '@/context/EditorContext';
 import { Plus, Settings, Layers, FileText, LayoutGrid, Type, Save, RefreshCw, CircleDot, Palette, Grid3X3, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TextStyleEditor } from './TextStyleEditor';
+import { ElementStyleEditor } from './ElementStyleEditor';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,6 +34,7 @@ const EditorSidebar: React.FC = () => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [backgroundTab, setBackgroundTab] = useState<'colors' | 'gradients' | 'images'>('colors');
+  const [elementTab, setElementTab] = useState<'text' | 'style' | 'milestone'>('text');
 
   if (!isEditMode || !canEdit) return null;
 
@@ -495,105 +496,117 @@ const EditorSidebar: React.FC = () => {
                   {selectedElementData.element.type.charAt(0).toUpperCase() + selectedElementData.element.type.slice(1)}
                 </h3>
                 
-                {isTextElement && (
-                  <div className="mb-6 border-b pb-4">
-                    <div className="flex items-center mb-2">
-                      <Type size={16} className="mr-2" />
-                      <h4 className="font-medium">Text Styling</h4>
-                    </div>
-                    <TextStyleEditor 
+                {(isTextElement || isMilestoneElement) && (
+                  <Tabs defaultValue="text" className="mb-4">
+                    <TabsList className="grid grid-cols-2 mb-2">
+                      <TabsTrigger
+                        value="text"
+                        onClick={() => setElementTab('text')}
+                        className="flex items-center gap-1"
+                      >
+                        <Type size={14} />
+                        Typography
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="style"
+                        onClick={() => setElementTab('style')}
+                        className="flex items-center gap-1"
+                      >
+                        <Palette size={14} />
+                        Style
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="text" className="mt-2">
+                      {isTextElement && (
+                        <TextStyleEditor
+                          element={selectedElementData.element}
+                          pageId={selectedElementData.pageId}
+                          sectionId={selectedElementData.sectionId}
+                        />
+                      )}
+
+                      {isMilestoneElement && (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Title</label>
+                            <input 
+                              type="text" 
+                              value={selectedElementData.element.properties?.title || ''}
+                              onChange={(e) => updateElement(
+                                selectedElementData.pageId, 
+                                selectedElementData.sectionId, 
+                                selectedElementData.element.id, 
+                                {
+                                  properties: {
+                                    ...selectedElementData.element.properties,
+                                    title: e.target.value
+                                  }
+                                }
+                              )}
+                              className="w-full p-2 border rounded text-sm"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Description</label>
+                            <textarea 
+                              value={selectedElementData.element.properties?.description || ''}
+                              onChange={(e) => updateElement(
+                                selectedElementData.pageId, 
+                                selectedElementData.sectionId, 
+                                selectedElementData.element.id, 
+                                {
+                                  properties: {
+                                    ...selectedElementData.element.properties,
+                                    description: e.target.value
+                                  }
+                                }
+                              )}
+                              className="w-full p-2 border rounded text-sm h-20"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Year/Date</label>
+                            <input 
+                              type="text" 
+                              value={selectedElementData.element.content}
+                              onChange={(e) => updateElement(
+                                selectedElementData.pageId, 
+                                selectedElementData.sectionId, 
+                                selectedElementData.element.id, 
+                                {
+                                  content: e.target.value
+                                }
+                              )}
+                              className="w-full p-2 border rounded text-sm"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </TabsContent>
+                    
+                    <TabsContent value="style" className="mt-2">
+                      <ElementStyleEditor
+                        element={selectedElementData.element}
+                        pageId={selectedElementData.pageId}
+                        sectionId={selectedElementData.sectionId}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                )}
+                
+                {!isTextElement && !isMilestoneElement && (
+                  <div className="mb-4">
+                    <ElementStyleEditor
                       element={selectedElementData.element}
                       pageId={selectedElementData.pageId}
                       sectionId={selectedElementData.sectionId}
                     />
                   </div>
                 )}
-                
-                {isMilestoneElement && (
-                  <div className="mb-6 border-b pb-4">
-                    <div className="flex items-center mb-2">
-                      <CircleDot size={16} className="mr-2" />
-                      <h4 className="font-medium">Milestone Settings</h4>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Title</label>
-                        <input 
-                          type="text" 
-                          value={selectedElementData.element.properties?.title || ''}
-                          onChange={(e) => updateElement(
-                            selectedElementData.pageId, 
-                            selectedElementData.sectionId, 
-                            selectedElementData.element.id, 
-                            {
-                              properties: {
-                                ...selectedElementData.element.properties,
-                                title: e.target.value
-                              }
-                            }
-                          )}
-                          className="w-full p-2 border rounded text-sm"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Description</label>
-                        <textarea 
-                          value={selectedElementData.element.properties?.description || ''}
-                          onChange={(e) => updateElement(
-                            selectedElementData.pageId, 
-                            selectedElementData.sectionId, 
-                            selectedElementData.element.id, 
-                            {
-                              properties: {
-                                ...selectedElementData.element.properties,
-                                description: e.target.value
-                              }
-                            }
-                          )}
-                          className="w-full p-2 border rounded text-sm h-20"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Year/Date</label>
-                        <input 
-                          type="text" 
-                          value={selectedElementData.element.content}
-                          onChange={(e) => updateElement(
-                            selectedElementData.pageId, 
-                            selectedElementData.sectionId, 
-                            selectedElementData.element.id, 
-                            {
-                              content: e.target.value
-                            }
-                          )}
-                          className="w-full p-2 border rounded text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {(['heading', 'text', 'button', 'milestone'].includes(selectedElementData.element.type)) && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-2">Text Color</label>
-                    <div className="grid grid-cols-5 gap-2">
-                      <button onClick={() => updateElementColor('text-black')} className="w-6 h-6 bg-black rounded-full" />
-                      <button onClick={() => updateElementColor('text-white')} className="w-6 h-6 bg-white border rounded-full" />
-                      <button onClick={() => updateElementColor('text-editor-blue')} className="w-6 h-6 bg-editor-blue rounded-full" />
-                      <button onClick={() => updateElementColor('text-editor-purple')} className="w-6 h-6 bg-editor-purple rounded-full" />
-                      <button onClick={() => updateElementColor('text-editor-teal')} className="w-6 h-6 bg-editor-teal rounded-full" />
-                      <button onClick={() => updateElementColor('text-gray-700')} className="w-6 h-6 bg-gray-700 rounded-full" />
-                      <button onClick={() => updateElementColor('text-red-500')} className="w-6 h-6 bg-red-500 rounded-full" />
-                      <button onClick={() => updateElementColor('text-yellow-500')} className="w-6 h-6 bg-yellow-500 rounded-full" />
-                      <button onClick={() => updateElementColor('text-green-500')} className="w-6 h-6 bg-green-500 rounded-full" />
-                      <button onClick={() => updateElementColor('text-editor-indigo')} className="w-6 h-6 bg-editor-indigo rounded-full" />
-                    </div>
-                  </div>
-                )}
-                
+
                 {currentSectionUsesGrid && (
                   <div className="mb-4 border-t pt-4">
                     <div className="flex items-center mb-2">

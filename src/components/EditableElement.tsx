@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { PageElement } from '@/context/EditorContext';
 import { useEditor } from '@/context/EditorContext';
 import { cn } from '@/lib/utils';
-import { Trash2, Image } from 'lucide-react';
+import { Trash2, Image, CircleDot } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,6 +107,21 @@ const EditableElement: React.FC<EditableElementProps> = ({
     setImgDialogOpen(false);
   };
 
+  const renderMilestone = () => {
+    return (
+      <div className={cn("flex flex-col items-center p-4", element.properties?.className)}>
+        <div className="mb-2 text-3xl font-bold">{element.content}</div>
+        {element.properties?.title && (
+          <h4 className="text-lg font-semibold mb-1">{element.properties.title}</h4>
+        )}
+        {element.properties?.description && (
+          <p className="text-center">{element.properties.description}</p>
+        )}
+        <CircleDot className="mt-2" size={24} />
+      </div>
+    );
+  };
+
   const renderElement = () => {
     switch (element.type) {
       case 'heading':
@@ -163,10 +178,18 @@ const EditableElement: React.FC<EditableElementProps> = ({
           />
         );
       
+      case 'milestone':
+        return renderMilestone();
+      
       default:
         return <div>Unknown element type: {element.type}</div>;
     }
   };
+
+  // Apply grid position classes if they exist
+  const gridPositionClasses = element.gridPosition 
+    ? `${element.gridPosition.column || ''} ${element.gridPosition.row || ''} ${element.gridPosition.columnSpan || ''} ${element.gridPosition.rowSpan || ''}`
+    : '';
 
   return (
     <>
@@ -174,6 +197,7 @@ const EditableElement: React.FC<EditableElementProps> = ({
         ref={elementRef}
         className={cn(
           'relative',
+          gridPositionClasses,
           isEditMode && canEdit && 'hover:outline hover:outline-blue-400',
           isSelected && 'outline outline-blue-600 outline-2',
           className
