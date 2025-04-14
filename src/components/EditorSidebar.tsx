@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useEditor } from '@/context/EditorContext';
-import { Plus, Settings, Layers, FileText, LayoutGrid, Type, Save, RefreshCw, CircleDot, Palette, Grid3X3, Image } from 'lucide-react';
+import { Plus, Settings, Layers, FileText, LayoutGrid, Type, Save, RefreshCw, CircleDot, Palette, Grid3X3, Image, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TextStyleEditor } from './TextStyleEditor';
 import { ElementStyleEditor } from './ElementStyleEditor';
