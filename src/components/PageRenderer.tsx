@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useEditor } from '@/context/EditorContext';
 import EditableSection from './EditableSection';
 import { Trash2 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const PageRenderer: React.FC = () => {
   const { pages, currentPageId, updatePage, isEditMode, userRole, removePage } = useEditor();
@@ -17,7 +16,6 @@ const PageRenderer: React.FC = () => {
     return <div className="p-8 text-center text-red-500">Page not found</div>;
   }
 
-  // Separate sections by type, but don't render header section
   const footerSection = currentPage.sections.find(section => section.type === 'footer');
   const contentSections = currentPage.sections.filter(
     section => (section.type === 'content' || !section.type)
@@ -41,7 +39,6 @@ const PageRenderer: React.FC = () => {
       return;
     }
     
-    // Find another page to navigate to
     const otherPage = pages.find(page => page.id !== currentPageId);
     if (otherPage) {
       removePage(currentPageId, otherPage.id);
@@ -92,7 +89,6 @@ const PageRenderer: React.FC = () => {
         </div>
       )}
       
-      {/* Content Sections */}
       <div className="flex-grow">
         {contentSections.map((section) => (
           <EditableSection 
@@ -103,7 +99,6 @@ const PageRenderer: React.FC = () => {
         ))}
       </div>
       
-      {/* Render Footer */}
       {footerSection && (
         <EditableSection 
           key={footerSection.id}
