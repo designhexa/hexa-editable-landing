@@ -2,10 +2,15 @@
 import React from 'react';
 import { useEditor } from '@/context/EditorContext';
 import EditableSection from './EditableSection';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Layout as LayoutIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-const PageRenderer: React.FC = () => {
+interface PageRendererProps {
+  layout?: 'fullwidth' | 'boxed';
+}
+
+const PageRenderer: React.FC<PageRendererProps> = ({ layout = 'fullwidth' }) => {
   const { pages, currentPageId, updatePage, isEditMode, userRole, removePage } = useEditor();
   const { toast } = useToast();
   
@@ -29,6 +34,10 @@ const PageRenderer: React.FC = () => {
   const handlePageSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updatePage(currentPageId, { slug: e.target.value });
   };
+
+  const handleLayoutChange = (value: 'fullwidth' | 'boxed') => {
+    updatePage(currentPageId, { layout: value });
+  };
   
   const handleDeletePage = () => {
     if (pages.length <= 1) {
@@ -50,6 +59,10 @@ const PageRenderer: React.FC = () => {
       });
     }
   };
+
+  const contentContainerClasses = layout === 'boxed' 
+    ? "container mx-auto px-4 max-w-7xl" 
+    : "w-full";
   
   return (
     <div className="min-h-screen flex flex-col relative">
@@ -75,6 +88,22 @@ const PageRenderer: React.FC = () => {
                 className="px-2 py-1 text-sm border rounded"
               />
             </div>
+
+            <div className="flex items-center ml-4">
+              <span className="text-sm font-medium mr-2">Layout:</span>
+              <Select
+                value={currentPage.layout || 'fullwidth'}
+                onValueChange={(value) => handleLayoutChange(value as 'fullwidth' | 'boxed')}
+              >
+                <SelectTrigger className="w-32 h-8 text-sm">
+                  <SelectValue placeholder="Select layout" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fullwidth">Full Width</SelectItem>
+                  <SelectItem value="boxed">Boxed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             
             {isAdmin && (
               <button
@@ -91,13 +120,15 @@ const PageRenderer: React.FC = () => {
       )}
       
       <div className="flex-grow">
-        {contentSections.map((section) => (
-          <EditableSection 
-            key={section.id}
-            section={section}
-            pageId={currentPage.id}
-          />
-        ))}
+        <div className={contentContainerClasses}>
+          {contentSections.map((section) => (
+            <EditableSection 
+              key={section.id}
+              section={section}
+              pageId={currentPage.id}
+            />
+          ))}
+        </div>
       </div>
       
       {footerSection && (

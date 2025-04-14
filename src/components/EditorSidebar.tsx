@@ -34,7 +34,7 @@ const EditorSidebar: React.FC = () => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [backgroundTab, setBackgroundTab] = useState<'colors' | 'gradients' | 'images'>('colors');
-  const [elementTab, setElementTab] = useState<'text' | 'style' | 'milestone'>('text');
+  const [elementTab, setElementTab] = useState<'text' | 'style' | 'milestone' | 'html'>('text');
 
   if (!isEditMode || !canEdit) return null;
 
@@ -263,6 +263,16 @@ const EditorSidebar: React.FC = () => {
         },
         [property]: value
       }
+    });
+  };
+
+  const handleUpdateHtml = (html: string) => {
+    if (!selectedElementData) return;
+    
+    const { pageId, sectionId, element } = selectedElementData;
+    
+    updateElement(pageId, sectionId, element.id, {
+      content: html
     });
   };
 
@@ -498,7 +508,7 @@ const EditorSidebar: React.FC = () => {
                 
                 {(isTextElement || isMilestoneElement) && (
                   <Tabs defaultValue="text" className="mb-4">
-                    <TabsList className="grid grid-cols-2 mb-2">
+                    <TabsList className="grid grid-cols-3 mb-2">
                       <TabsTrigger
                         value="text"
                         onClick={() => setElementTab('text')}
@@ -514,6 +524,14 @@ const EditorSidebar: React.FC = () => {
                       >
                         <Palette size={14} />
                         Style
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="html"
+                        onClick={() => setElementTab('html')}
+                        className="flex items-center gap-1"
+                      >
+                        <FileText size={14} />
+                        HTML
                       </TabsTrigger>
                     </TabsList>
                     
@@ -596,17 +614,66 @@ const EditorSidebar: React.FC = () => {
                         />
                       )}
                     </TabsContent>
+
+                    <TabsContent value="html" className="mt-2">
+                      <div className="space-y-3">
+                        <label className="block text-sm font-medium mb-1">HTML Editor</label>
+                        <textarea
+                          value={selectedElementData.element.content || ''}
+                          onChange={(e) => handleUpdateHtml(e.target.value)}
+                          className="w-full p-2 border rounded text-sm min-h-[200px] font-mono"
+                          spellCheck={false}
+                        />
+                        <p className="text-xs text-gray-500">
+                          Edit the HTML content directly. Be careful with your syntax.
+                        </p>
+                      </div>
+                    </TabsContent>
                   </Tabs>
                 )}
                 
                 {!isTextElement && !isMilestoneElement && selectedElementData && (
-                  <div className="mb-4">
-                    <ElementStyleEditor
-                      element={selectedElementData.element}
-                      pageId={selectedElementData.pageId}
-                      sectionId={selectedElementData.sectionId}
-                    />
-                  </div>
+                  <Tabs defaultValue="style" className="mb-4">
+                    <TabsList className="grid grid-cols-2 mb-2">
+                      <TabsTrigger
+                        value="style"
+                        className="flex items-center gap-1"
+                      >
+                        <Palette size={14} />
+                        Style
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="html"
+                        className="flex items-center gap-1"
+                      >
+                        <FileText size={14} />
+                        HTML
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="style" className="mt-2">
+                      <ElementStyleEditor
+                        element={selectedElementData.element}
+                        pageId={selectedElementData.pageId}
+                        sectionId={selectedElementData.sectionId}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="html" className="mt-2">
+                      <div className="space-y-3">
+                        <label className="block text-sm font-medium mb-1">HTML Editor</label>
+                        <textarea
+                          value={selectedElementData.element.content || ''}
+                          onChange={(e) => handleUpdateHtml(e.target.value)}
+                          className="w-full p-2 border rounded text-sm min-h-[200px] font-mono"
+                          spellCheck={false}
+                        />
+                        <p className="text-xs text-gray-500">
+                          Edit the HTML content directly. Be careful with your syntax.
+                        </p>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 )}
 
                 {currentSectionUsesGrid && (

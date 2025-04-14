@@ -22,7 +22,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {children}
           </main>
         </div>
-        {isEditMode && <EditorSidebar />}
+        {isEditMode && (
+          <div className="fixed right-0 top-0 h-full">
+            <EditorSidebar />
+          </div>
+        )}
         <MobileEditorTrigger />
       </div>
     </SidebarProvider>
