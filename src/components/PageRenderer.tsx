@@ -5,9 +5,10 @@ import EditableSection from './EditableSection';
 import { Trash2, Layout as LayoutIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { LayoutType } from '@/types/editor';
 
 interface PageRendererProps {
-  layout?: 'fullwidth' | 'boxed';
+  layout?: LayoutType;
 }
 
 const PageRenderer: React.FC<PageRendererProps> = ({ layout = 'fullwidth' }) => {
@@ -35,7 +36,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({ layout = 'fullwidth' }) => 
     updatePage(currentPageId, { slug: e.target.value });
   };
 
-  const handleLayoutChange = (value: 'fullwidth' | 'boxed') => {
+  const handleLayoutChange = (value: LayoutType) => {
     updatePage(currentPageId, { layout: value });
   };
   
@@ -60,7 +61,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({ layout = 'fullwidth' }) => 
     }
   };
 
-  const contentContainerClasses = layout === 'boxed' 
+  const contentContainerClasses = currentPage.layout === 'boxed' 
     ? "container mx-auto px-4 max-w-7xl" 
     : "w-full";
   

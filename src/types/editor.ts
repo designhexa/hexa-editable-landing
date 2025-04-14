@@ -3,6 +3,7 @@
 export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section' | 'milestone';
 export type UserRole = 'viewer' | 'editor' | 'admin';
 export type SectionType = 'content' | 'header' | 'footer';
+export type LayoutType = 'fullwidth' | 'boxed';
 
 export interface MenuItem {
   id: string;
@@ -61,4 +62,5 @@ export interface Page {
   sections: Section[];
   isPublished: boolean;
   publishedAt?: string;
+  layout?: LayoutType;
 }
