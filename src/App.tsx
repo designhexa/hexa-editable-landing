@@ -14,9 +14,9 @@ import NavigationManager from '@/components/NavigationManager';
 
 function App() {
   return (
-    <AuthProvider>
-      <EditorProvider>
-        <Router>
+    <Router>
+      <AuthProvider>
+        <EditorProvider>
           <Layout>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -33,9 +33,9 @@ function App() {
             </Routes>
           </Layout>
           <Toaster />
-        </Router>
-      </EditorProvider>
-    </AuthProvider>
+        </EditorProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
