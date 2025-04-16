@@ -26,17 +26,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <div className="flex flex-col flex-grow">
+        <div className="flex flex-col flex-grow w-full">
           <Navbar />
-          <main className="flex-grow relative">
+          <main className="flex-grow w-full">
             {children}
           </main>
         </div>
-        {/* Ensure the sidebar is visible when isEditMode is true */}
+        {/* Ensure the editor sidebar is visible when isEditMode is true */}
         {isEditMode && isAuthenticated && (
-          <div className="fixed right-0 top-0 h-full">
-            <EditorSidebar />
-          </div>
+          <EditorSidebar />
         )}
         <EditModeToggle />
         {isAuthenticated && <MobileEditorTrigger />}

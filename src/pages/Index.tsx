@@ -6,7 +6,7 @@ import { LayoutType } from '@/types/editor';
 
 const Index: React.FC = () => {
   const { currentPage } = useEditor();
-  const layout = (currentPage?.layout || 'fullwidth') as LayoutType;
+  const layout = 'fullwidth' as LayoutType;
   
   return (
     <div className="w-full">

@@ -1,7 +1,11 @@
 
 import React, { useState } from 'react';
 import { useEditor } from '@/context/EditorContext';
-import { Plus, Settings, Layers, FileText, LayoutGrid, Type, Save, RefreshCw, CircleDot, Palette, Grid3X3, Image, Upload } from 'lucide-react';
+import { 
+  Plus, Settings, Layers, FileText, LayoutGrid, 
+  Type, Save, RefreshCw, CircleDot, Palette, 
+  Grid3X3, Image, Upload, Menu, X, Home 
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TextStyleEditor } from './TextStyleEditor';
 import { ElementStyleEditor } from './ElementStyleEditor';
@@ -290,12 +294,17 @@ const EditorSidebar: React.FC = () => {
 
   return (
     <div className="bg-white border-l shadow-lg fixed right-0 top-0 h-full w-72 z-50 overflow-hidden flex flex-col">
-      <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-        <h2 className="font-medium text-xl">Page Editor</h2>
+      {/* Editor Navbar */}
+      <div className="bg-gray-900 text-white p-4 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <LayoutGrid size={18} />
+          <h2 className="font-medium">Page Builder</h2>
+        </div>
         <Button 
           onClick={handleSaveChanges} 
           size="sm" 
-          className="bg-blue-600 text-white hover:bg-blue-700"
+          variant="outline"
+          className="bg-transparent border-white text-white hover:bg-gray-800"
           disabled={isSaving}
         >
           {isSaving ? (
@@ -303,7 +312,7 @@ const EditorSidebar: React.FC = () => {
           ) : (
             <Save className="h-4 w-4 mr-1" />
           )}
-          Simpan
+          Save
         </Button>
       </div>
       
