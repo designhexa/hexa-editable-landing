@@ -79,14 +79,34 @@ const PageRenderer: React.FC = () => {
             </div>
             
             {isAdmin && (
-              <button
-                onClick={handleDeletePage}
-                className="ml-auto flex items-center px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm"
-                title="Delete this page"
-              >
-                <Trash2 size={14} className="mr-1" />
-                Delete Page
-              </button>
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={handleDeletePage}
+                  className="flex items-center px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm"
+                  title="Delete this page"
+                >
+                  <Trash2 size={14} className="mr-1" />
+                  Delete Page
+                </button>
+                
+                {currentPage.needs_republish && (
+                  <button
+                    onClick={() => {
+                      updatePage(currentPageId, {
+                        needs_republish: false,
+                        is_published: true
+                      });
+                      toast({
+                        title: "Page published",
+                        description: "Your changes are now live.",
+                      });
+                    }}
+                    className="flex items-center px-3 py-1 bg-amber-50 text-amber-600 rounded hover:bg-amber-100 text-sm font-medium"
+                  >
+                    Republish
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

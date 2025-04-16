@@ -6,6 +6,7 @@ import { TextStyleEditor } from './TextStyleEditor';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ColorGradientPicker } from './ColorGradientPicker';
+import { BackgroundImageUpload } from './BackgroundImageUpload';
 
 const EditorSidebar: React.FC = () => {
   const { 
@@ -21,7 +22,8 @@ const EditorSidebar: React.FC = () => {
     replaceHeaderSection,
     replaceFooterSection,
     saveEditorChanges,
-    updateSection
+    updateSection,
+    updatePage
   } = useEditor();
   
   const [activeTab, setActiveTab] = useState<'pages' | 'elements'>('pages');
@@ -237,7 +239,40 @@ const EditorSidebar: React.FC = () => {
     });
   };
 
-  const updateSectionBackground = (background: string) => {
+  const updateSectionBackground = (imageUrl: string) => {
+    if (!selectedElementData) return;
+    
+    const { pageId, sectionId } = selectedElementData;
+    
+    updateSection(pageId, sectionId, {
+      properties: {
+        ...currentSection?.properties,
+        backgroundImage: `url(${imageUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }
+    });
+    
+    // Mark page as needing republish
+    updatePage(pageId, { needs_republish: true });
+  };
+
+  const handleAddHtmlEmbed = () => {
+    if (!selectedElementData) return;
+    
+    const { pageId, sectionId } = selectedElementData;
+    
+    addElement(pageId, sectionId, {
+      id: `element-${Date.now()}-html`,
+      type: 'html',
+      content: '<div>Add your HTML here</div>',
+      properties: {
+        className: 'w-full'
+      }
+    });
+  };
+
+  const updateSectionBackgroundColor = (background: string) => {
     if (!selectedElementData) return;
     
     const { pageId, sectionId } = selectedElementData;
@@ -340,168 +375,151 @@ const EditorSidebar: React.FC = () => {
           
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium">Sections</h3>
-              <button 
-                onClick={handleAddSection}
-                className="text-xs bg-editor-blue text-white px-2 py-1 rounded flex items-center"
-              >
-                <Plus size={12} className="mr-1" />
-                Add Section
-              </button>
+              <h3 className="font-medium">Elements</h3>
             </div>
-            
-            {isAdmin && (
-              <div className="mt-2 mb-4 flex space-x-2">
-                <button 
-                  onClick={handleAddHeaderSection}
-                  className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded flex-1"
-                >
-                  Replace Header
-                </button>
-                <button 
-                  onClick={handleAddFooterSection}
-                  className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded flex-1"
-                >
-                  Replace Footer
-                </button>
-              </div>
-            )}
-            
-            <div className="text-sm text-gray-600 italic">
-              Use the section controls to manage layout
+            <div className="bg-gray-50 rounded p-2">
+              <button
+                onClick={handleAddHtmlEmbed}
+                className="w-full text-left p-2 hover:bg-white rounded text-sm"
+              >
+                + HTML Embed
+              </button>
             </div>
           </div>
         </div>
       )}
       
-      {activeTab === 'elements' && (
+      {activeTab === 'elements' && selectedElementData && (
         <div className="p-4">
-          {selectedElementData ? (
-            <div>
-              <h3 className="font-medium mb-4">Element Settings: {selectedElementData.element.type}</h3>
-              
-              {isTextElement && (
-                <div className="mb-6 border-b pb-4">
-                  <div className="flex items-center mb-2">
-                    <Type size={16} className="mr-2" />
-                    <h4 className="font-medium">Text Styling</h4>
-                  </div>
-                  <TextStyleEditor 
-                    element={selectedElementData.element}
-                    pageId={selectedElementData.pageId}
-                    sectionId={selectedElementData.sectionId}
+          <div>
+            <h3 className="font-medium mb-4">Element Settings: {selectedElementData.element.type}</h3>
+            
+            {isTextElement && (
+              <div className="mb-6 border-b pb-4">
+                <div className="flex items-center mb-2">
+                  <Type size={16} className="mr-2" />
+                  <h4 className="font-medium">Text Styling</h4>
+                </div>
+                <TextStyleEditor 
+                  element={selectedElementData.element}
+                  pageId={selectedElementData.pageId}
+                  sectionId={selectedElementData.sectionId}
+                />
+              </div>
+            )}
+            
+            {(['heading', 'text', 'button'].includes(selectedElementData.element.type)) && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Text Color</label>
+                <div className="grid grid-cols-5 gap-2">
+                  <button onClick={() => updateElementColor('text-black')} className="w-6 h-6 bg-black rounded-full" />
+                  <button onClick={() => updateElementColor('text-white')} className="w-6 h-6 bg-white border rounded-full" />
+                  <button onClick={() => updateElementColor('text-editor-blue')} className="w-6 h-6 bg-editor-blue rounded-full" />
+                  <button onClick={() => updateElementColor('text-editor-purple')} className="w-6 h-6 bg-editor-purple rounded-full" />
+                  <button onClick={() => updateElementColor('text-editor-teal')} className="w-6 h-6 bg-editor-teal rounded-full" />
+                  <button onClick={() => updateElementColor('text-gray-700')} className="w-6 h-6 bg-gray-700 rounded-full" />
+                  <button onClick={() => updateElementColor('text-red-500')} className="w-6 h-6 bg-red-500 rounded-full" />
+                  <button onClick={() => updateElementColor('text-yellow-500')} className="w-6 h-6 bg-yellow-500 rounded-full" />
+                  <button onClick={() => updateElementColor('text-green-500')} className="w-6 h-6 bg-green-500 rounded-full" />
+                  <button onClick={() => updateElementColor('text-editor-indigo')} className="w-6 h-6 bg-editor-indigo rounded-full" />
+                </div>
+              </div>
+            )}
+            
+            {currentSectionUsesGrid && (
+              <div className="mb-4 border-t pt-4">
+                <div className="flex items-center mb-2">
+                  <LayoutGrid size={16} className="mr-2" />
+                  <label className="block text-sm font-medium">Grid Position</label>
+                </div>
+                
+                <div className="mb-2">
+                  <label className="block text-xs text-gray-500 mb-1">Column</label>
+                  <select 
+                    value={selectedElementData.element.gridPosition?.column || ''}
+                    onChange={(e) => updateElementGridPosition('column', e.target.value)}
+                    className="w-full p-1 text-sm border rounded"
+                  >
+                    <option value="default">Default</option>
+                    <option value="col-span-1">Column 1</option>
+                    <option value="col-span-1 md:col-start-1">Start at 1</option>
+                    <option value="col-span-1 md:col-start-2">Start at 2</option>
+                    <option value="col-span-1 md:col-start-3">Start at 3</option>
+                    <option value="col-span-full">Full Width</option>
+                  </select>
+                </div>
+                
+                <div className="mb-2">
+                  <label className="block text-xs text-gray-500 mb-1">Row</label>
+                  <select 
+                    value={selectedElementData.element.gridPosition?.row || ''}
+                    onChange={(e) => updateElementGridPosition('row', e.target.value)}
+                    className="w-full p-1 text-sm border rounded"
+                  >
+                    <option value="default">Default</option>
+                    <option value="row-start-1">Row 1</option>
+                    <option value="row-start-2">Row 2</option>
+                    <option value="row-start-3">Row 3</option>
+                    <option value="row-start-4">Row 4</option>
+                  </select>
+                </div>
+                
+                <div className="mb-2">
+                  <label className="block text-xs text-gray-500 mb-1">Column Span</label>
+                  <select 
+                    value={selectedElementData.element.gridPosition?.columnSpan || ''}
+                    onChange={(e) => updateElementGridPosition('columnSpan', e.target.value)}
+                    className="w-full p-1 text-sm border rounded"
+                  >
+                    <option value="default">Default</option>
+                    <option value="md:col-span-1">Span 1</option>
+                    <option value="md:col-span-2">Span 2</option>
+                    <option value="md:col-span-3">Span 3</option>
+                    <option value="col-span-full">Full Width</option>
+                  </select>
+                </div>
+                
+                <div className="mb-2">
+                  <label className="block text-xs text-gray-500 mb-1">Row Span</label>
+                  <select 
+                    value={selectedElementData.element.gridPosition?.rowSpan || ''}
+                    onChange={(e) => updateElementGridPosition('rowSpan', e.target.value)}
+                    className="w-full p-1 text-sm border rounded"
+                  >
+                    <option value="default">Default</option>
+                    <option value="row-span-1">Span 1</option>
+                    <option value="row-span-2">Span 2</option>
+                    <option value="row-span-3">Span 3</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            
+            {selectedElementData?.sectionId && (
+              <>
+                <div className="mb-6 border-t pt-4">
+                  <h4 className="font-medium mb-3">Background Image</h4>
+                  <BackgroundImageUpload
+                    currentImage={currentSection?.properties?.backgroundImage?.replace(/url\(['"](.+)['"]\)/, '$1')}
+                    onImageSelect={updateSectionBackground}
                   />
                 </div>
-              )}
-              
-              {(['heading', 'text', 'button'].includes(selectedElementData.element.type)) && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Text Color</label>
-                  <div className="grid grid-cols-5 gap-2">
-                    <button onClick={() => updateElementColor('text-black')} className="w-6 h-6 bg-black rounded-full" />
-                    <button onClick={() => updateElementColor('text-white')} className="w-6 h-6 bg-white border rounded-full" />
-                    <button onClick={() => updateElementColor('text-editor-blue')} className="w-6 h-6 bg-editor-blue rounded-full" />
-                    <button onClick={() => updateElementColor('text-editor-purple')} className="w-6 h-6 bg-editor-purple rounded-full" />
-                    <button onClick={() => updateElementColor('text-editor-teal')} className="w-6 h-6 bg-editor-teal rounded-full" />
-                    <button onClick={() => updateElementColor('text-gray-700')} className="w-6 h-6 bg-gray-700 rounded-full" />
-                    <button onClick={() => updateElementColor('text-red-500')} className="w-6 h-6 bg-red-500 rounded-full" />
-                    <button onClick={() => updateElementColor('text-yellow-500')} className="w-6 h-6 bg-yellow-500 rounded-full" />
-                    <button onClick={() => updateElementColor('text-green-500')} className="w-6 h-6 bg-green-500 rounded-full" />
-                    <button onClick={() => updateElementColor('text-editor-indigo')} className="w-6 h-6 bg-editor-indigo rounded-full" />
-                  </div>
-                </div>
-              )}
-              
-              {currentSectionUsesGrid && (
-                <div className="mb-4 border-t pt-4">
-                  <div className="flex items-center mb-2">
-                    <LayoutGrid size={16} className="mr-2" />
-                    <label className="block text-sm font-medium">Grid Position</label>
-                  </div>
-                  
-                  <div className="mb-2">
-                    <label className="block text-xs text-gray-500 mb-1">Column</label>
-                    <select 
-                      value={selectedElementData.element.gridPosition?.column || ''}
-                      onChange={(e) => updateElementGridPosition('column', e.target.value)}
-                      className="w-full p-1 text-sm border rounded"
-                    >
-                      <option value="default">Default</option>
-                      <option value="col-span-1">Column 1</option>
-                      <option value="col-span-1 md:col-start-1">Start at 1</option>
-                      <option value="col-span-1 md:col-start-2">Start at 2</option>
-                      <option value="col-span-1 md:col-start-3">Start at 3</option>
-                      <option value="col-span-full">Full Width</option>
-                    </select>
-                  </div>
-                  
-                  <div className="mb-2">
-                    <label className="block text-xs text-gray-500 mb-1">Row</label>
-                    <select 
-                      value={selectedElementData.element.gridPosition?.row || ''}
-                      onChange={(e) => updateElementGridPosition('row', e.target.value)}
-                      className="w-full p-1 text-sm border rounded"
-                    >
-                      <option value="default">Default</option>
-                      <option value="row-start-1">Row 1</option>
-                      <option value="row-start-2">Row 2</option>
-                      <option value="row-start-3">Row 3</option>
-                      <option value="row-start-4">Row 4</option>
-                    </select>
-                  </div>
-                  
-                  <div className="mb-2">
-                    <label className="block text-xs text-gray-500 mb-1">Column Span</label>
-                    <select 
-                      value={selectedElementData.element.gridPosition?.columnSpan || ''}
-                      onChange={(e) => updateElementGridPosition('columnSpan', e.target.value)}
-                      className="w-full p-1 text-sm border rounded"
-                    >
-                      <option value="default">Default</option>
-                      <option value="md:col-span-1">Span 1</option>
-                      <option value="md:col-span-2">Span 2</option>
-                      <option value="md:col-span-3">Span 3</option>
-                      <option value="col-span-full">Full Width</option>
-                    </select>
-                  </div>
-                  
-                  <div className="mb-2">
-                    <label className="block text-xs text-gray-500 mb-1">Row Span</label>
-                    <select 
-                      value={selectedElementData.element.gridPosition?.rowSpan || ''}
-                      onChange={(e) => updateElementGridPosition('rowSpan', e.target.value)}
-                      className="w-full p-1 text-sm border rounded"
-                    >
-                      <option value="default">Default</option>
-                      <option value="row-span-1">Span 1</option>
-                      <option value="row-span-2">Span 2</option>
-                      <option value="row-span-3">Span 3</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-              
-              {selectedElementData?.sectionId && (
+                
                 <div className="mb-6 border-t pt-4">
                   <h4 className="font-medium mb-3">Background</h4>
                   <ColorGradientPicker
                     type="background"
                     value={currentSection?.properties?.backgroundColor || 'bg-white'}
-                    onChange={updateSectionBackground}
+                    onChange={updateSectionBackgroundColor}
                   />
                 </div>
-              )}
-              
-              <div className="text-sm text-gray-600">
-                Double-click on text elements to edit their content.
-              </div>
+              </>
+            )}
+            
+            <div className="text-sm text-gray-600">
+              Double-click on text elements to edit their content.
             </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Layers size={24} className="mx-auto mb-2" />
-              <p>Select an element to edit its properties</p>
-            </div>
-          )}
+          </div>
         </div>
       )}
     </div>
