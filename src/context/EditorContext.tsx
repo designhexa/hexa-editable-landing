@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
-export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section';
+export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section' | 'html';
 export type UserRole = 'viewer' | 'editor' | 'admin';
 export type SectionType = 'content' | 'header' | 'footer';
 
@@ -45,6 +45,9 @@ export interface Section {
     gridGap?: string;
     gridType?: string;
     isDraggableGrid?: boolean;
+    backgroundImage?: string;
+    backgroundSize?: string;
+    backgroundPosition?: string;
   };
   type?: SectionType;
 }
@@ -56,6 +59,7 @@ export interface Page {
   sections: Section[];
   isPublished: boolean;
   publishedAt?: string;
+  needs_republish?: boolean;
 }
 
 interface EditorContextType {
@@ -550,6 +554,7 @@ const defaultHomePage: Page = {
   slug: '/',
   isPublished: true,
   publishedAt: new Date().toISOString(),
+  needs_republish: false,
   sections: [
     {
       id: 'header-section',

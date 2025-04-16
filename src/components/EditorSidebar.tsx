@@ -17,6 +17,7 @@ const EditorSidebar: React.FC = () => {
     addPage, 
     setCurrentPageId,
     addSection,
+    addElement,
     getSelectedElement,
     updateElement,
     replaceHeaderSection,

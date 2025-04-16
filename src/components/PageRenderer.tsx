@@ -94,7 +94,7 @@ const PageRenderer: React.FC = () => {
                     onClick={() => {
                       updatePage(currentPageId, {
                         needs_republish: false,
-                        is_published: true
+                        isPublished: true
                       });
                       toast({
                         title: "Page published",
