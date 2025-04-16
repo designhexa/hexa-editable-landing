@@ -251,10 +251,12 @@ const EditorSidebar: React.FC = () => {
 
   const currentPage = pages.find(page => page.id === currentPageId);
   let currentSectionUsesGrid = false;
+  let currentSection = null;
   
   if (selectedElementData && currentPage) {
     const section = currentPage.sections.find(s => s.id === selectedElementData.sectionId);
     currentSectionUsesGrid = section?.properties?.isGridLayout || false;
+    currentSection = section;
   }
 
   const isTextElement = selectedElementData && ['heading', 'text', 'button'].includes(selectedElementData.element.type);
@@ -484,7 +486,7 @@ const EditorSidebar: React.FC = () => {
                   <h4 className="font-medium mb-3">Background</h4>
                   <ColorGradientPicker
                     type="background"
-                    value={selectedElementData?.section?.properties?.backgroundColor || 'bg-white'}
+                    value={currentSection?.properties?.backgroundColor || 'bg-white'}
                     onChange={updateSectionBackground}
                   />
                 </div>
