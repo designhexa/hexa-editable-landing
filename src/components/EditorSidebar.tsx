@@ -1,12 +1,19 @@
+
 import React, { useState } from 'react';
 import { useEditor } from '@/context/EditorContext';
-import { Plus, Settings, Layers, FileText, LayoutGrid, Type, Save, RefreshCw } from 'lucide-react';
+import { Plus, Settings, Layers, FileText, LayoutGrid, Type, Save, RefreshCw, Grid, ArrowsMaximize } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TextStyleEditor } from './TextStyleEditor';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ColorGradientPicker } from './ColorGradientPicker';
 import { BackgroundImageUpload } from './BackgroundImageUpload';
+import { Input } from './ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Slider } from './ui/slider';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 const EditorSidebar: React.FC = () => {
   const { 
@@ -67,6 +74,7 @@ const EditorSidebar: React.FC = () => {
       title: newPageTitle,
       slug: newPageSlug,
       isPublished: false,
+      needs_republish: true,
       sections: [
         {
           id: `section-${Date.now()}`,
@@ -109,7 +117,8 @@ const EditorSidebar: React.FC = () => {
       properties: {
         backgroundColor: 'bg-white',
         paddingY: 'py-12',
-        paddingX: 'px-4'
+        paddingX: 'px-4',
+        height: 'auto',
       },
       elements: [
         {
@@ -130,6 +139,38 @@ const EditorSidebar: React.FC = () => {
         }
       ]
     });
+    
+    // Mark page as needing republish
+    updatePage(currentPageId, { needs_republish: true });
+  };
+
+  const handleAddHtmlSection = () => {
+    const currentPage = pages.find(page => page.id === currentPageId);
+    if (!currentPage) return;
+    
+    addSection(currentPageId, {
+      id: `section-${Date.now()}`,
+      type: 'content',
+      properties: {
+        backgroundColor: 'bg-white',
+        paddingY: 'py-8',
+        paddingX: 'px-4',
+        height: 'auto',
+      },
+      elements: [
+        {
+          id: `element-${Date.now()}-html`,
+          type: 'html',
+          content: '<div class="text-center"><h2 class="text-2xl font-bold mb-4">HTML Section</h2><p>This is a custom HTML section. Edit to add your code.</p></div>',
+          properties: {
+            className: 'w-full'
+          }
+        }
+      ]
+    });
+    
+    // Mark page as needing republish
+    updatePage(currentPageId, { needs_republish: true });
   };
 
   const handleAddHeaderSection = () => {
@@ -161,6 +202,9 @@ const EditorSidebar: React.FC = () => {
         }
       ]
     });
+    
+    // Mark page as needing republish
+    updatePage(currentPageId, { needs_republish: true });
   };
 
   const handleAddFooterSection = () => {
@@ -184,6 +228,9 @@ const EditorSidebar: React.FC = () => {
         }
       ]
     });
+    
+    // Mark page as needing republish
+    updatePage(currentPageId, { needs_republish: true });
   };
   
   const updateElementColor = (color: string) => {
@@ -202,6 +249,9 @@ const EditorSidebar: React.FC = () => {
         className: newClassName
       }
     });
+    
+    // Mark page as needing republish
+    updatePage(pageId, { needs_republish: true });
   };
 
   const updateElementAlign = (align: string) => {
@@ -220,6 +270,9 @@ const EditorSidebar: React.FC = () => {
         className: newClassName
       }
     });
+    
+    // Mark page as needing republish
+    updatePage(pageId, { needs_republish: true });
   };
 
   const updateElementGridPosition = (property: string, value: string) => {
@@ -238,6 +291,9 @@ const EditorSidebar: React.FC = () => {
         [property]: value
       }
     });
+    
+    // Mark page as needing republish
+    updatePage(pageId, { needs_republish: true });
   };
 
   const updateSectionBackground = (imageUrl: string) => {
@@ -248,9 +304,41 @@ const EditorSidebar: React.FC = () => {
     updateSection(pageId, sectionId, {
       properties: {
         ...currentSection?.properties,
-        backgroundImage: `url(${imageUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        backgroundImage: imageUrl,
+        backgroundSize: currentSection?.properties?.backgroundSize || 'cover',
+        backgroundPosition: currentSection?.properties?.backgroundPosition || 'center'
+      }
+    });
+    
+    // Mark page as needing republish
+    updatePage(pageId, { needs_republish: true });
+  };
+
+  const updateSectionGridSettings = (key: string, value: any) => {
+    if (!selectedElementData) return;
+    
+    const { pageId, sectionId } = selectedElementData;
+    
+    updateSection(pageId, sectionId, {
+      properties: {
+        ...currentSection?.properties,
+        [key]: value
+      }
+    });
+    
+    // Mark page as needing republish
+    updatePage(pageId, { needs_republish: true });
+  };
+
+  const updateSectionBackgroundProperty = (property: string, value: string) => {
+    if (!selectedElementData) return;
+    
+    const { pageId, sectionId } = selectedElementData;
+    
+    updateSection(pageId, sectionId, {
+      properties: {
+        ...currentSection?.properties,
+        [property]: value
       }
     });
     
@@ -271,6 +359,9 @@ const EditorSidebar: React.FC = () => {
         className: 'w-full'
       }
     });
+    
+    // Mark page as needing republish
+    updatePage(pageId, { needs_republish: true });
   };
 
   const updateSectionBackgroundColor = (background: string) => {
@@ -280,9 +371,13 @@ const EditorSidebar: React.FC = () => {
     
     updateSection(pageId, sectionId, {
       properties: {
+        ...currentSection?.properties,
         backgroundColor: background
       }
     });
+    
+    // Mark page as needing republish
+    updatePage(pageId, { needs_republish: true });
   };
 
   const currentPage = pages.find(page => page.id === currentPageId);
@@ -298,7 +393,7 @@ const EditorSidebar: React.FC = () => {
   const isTextElement = selectedElementData && ['heading', 'text', 'button'].includes(selectedElementData.element.type);
 
   return (
-    <div className="bg-white border-l shadow-lg fixed right-0 top-0 h-full w-72 z-10 overflow-auto">
+    <div className="bg-white border-l shadow-lg fixed right-0 top-0 h-full w-72 z-20 overflow-auto">
       <div className="p-4 border-b flex justify-between items-center">
         <h2 className="font-medium text-xl">Page Editor</h2>
         <Button 
@@ -369,8 +464,49 @@ const EditorSidebar: React.FC = () => {
                   {!page.isPublished && (
                     <span className="ml-2 text-xs opacity-70">(Draft)</span>
                   )}
+                  {page.needs_republish && page.isPublished && (
+                    <span className="ml-2 text-xs opacity-70">(Modified)</span>
+                  )}
                 </div>
               ))}
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium">Add Section</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleAddSection}
+                className="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm flex flex-col items-center justify-center"
+              >
+                <Layers size={20} className="mb-1" />
+                Content Section
+              </button>
+              <button
+                onClick={handleAddHtmlSection}
+                className="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm flex flex-col items-center justify-center"
+              >
+                <FileText size={20} className="mb-1" />
+                HTML Section
+              </button>
+              <button
+                onClick={handleAddHeaderSection}
+                className="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm flex flex-col items-center justify-center"
+                disabled={!isAdmin}
+              >
+                <ArrowsMaximize size={20} className="mb-1" />
+                Header Section
+              </button>
+              <button
+                onClick={handleAddFooterSection}
+                className="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm flex flex-col items-center justify-center"
+                disabled={!isAdmin}
+              >
+                <ArrowsMaximize size={20} className="mb-1 rotate-180" />
+                Footer Section
+              </button>
             </div>
           </div>
           
@@ -498,21 +634,238 @@ const EditorSidebar: React.FC = () => {
             
             {selectedElementData?.sectionId && (
               <>
-                <div className="mb-6 border-t pt-4">
-                  <h4 className="font-medium mb-3">Background Image</h4>
-                  <BackgroundImageUpload
-                    currentImage={currentSection?.properties?.backgroundImage?.replace(/url\(['"](.+)['"]\)/, '$1')}
-                    onImageSelect={updateSectionBackground}
-                  />
+                <div className="mb-4 border-t pt-4">
+                  <div className="flex items-center mb-2">
+                    <Grid size={16} className="mr-2" />
+                    <h4 className="font-medium">Section Layout</h4>
+                  </div>
+                  
+                  <div className="flex items-center mb-3 mt-2">
+                    <Switch
+                      id="grid-layout"
+                      checked={currentSection?.properties?.isGridLayout || false}
+                      onCheckedChange={(checked) => updateSectionGridSettings('isGridLayout', checked)}
+                      className="mr-2"
+                    />
+                    <Label htmlFor="grid-layout">Enable Grid Layout</Label>
+                  </div>
+                  
+                  {currentSection?.properties?.isGridLayout && (
+                    <div className="space-y-3 mb-3 bg-gray-50 p-2 rounded">
+                      <div>
+                        <Label className="text-xs text-gray-500">Grid Columns</Label>
+                        <Select
+                          value={currentSection?.properties?.gridColumns || 'grid-cols-1'}
+                          onValueChange={(value) => updateSectionGridSettings('gridColumns', value)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Select columns" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="grid-cols-1">1 Column</SelectItem>
+                            <SelectItem value="grid-cols-2">2 Columns</SelectItem>
+                            <SelectItem value="grid-cols-3">3 Columns</SelectItem>
+                            <SelectItem value="grid-cols-4">4 Columns</SelectItem>
+                            <SelectItem value="grid-cols-1 md:grid-cols-2">1 Col (Mobile) / 2 Col (Desktop)</SelectItem>
+                            <SelectItem value="grid-cols-1 md:grid-cols-3">1 Col (Mobile) / 3 Col (Desktop)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-gray-500">Grid Gap</Label>
+                        <Select
+                          value={currentSection?.properties?.gridGap || 'gap-4'}
+                          onValueChange={(value) => updateSectionGridSettings('gridGap', value)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Select gap size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="gap-0">No Gap</SelectItem>
+                            <SelectItem value="gap-2">Small Gap</SelectItem>
+                            <SelectItem value="gap-4">Medium Gap</SelectItem>
+                            <SelectItem value="gap-6">Large Gap</SelectItem>
+                            <SelectItem value="gap-8">Extra Large Gap</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <Switch
+                          id="draggable-grid"
+                          checked={currentSection?.properties?.isDraggableGrid || false}
+                          onCheckedChange={(checked) => updateSectionGridSettings('isDraggableGrid', checked)}
+                          className="mr-2"
+                        />
+                        <Label htmlFor="draggable-grid" className="text-xs">Draggable Elements</Label>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-3 mb-3">
+                    <div>
+                      <Label className="text-xs text-gray-500">Section Height</Label>
+                      <Select
+                        value={currentSection?.properties?.height || 'auto'}
+                        onValueChange={(value) => updateSectionGridSettings('height', value)}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Select height" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto">Auto</SelectItem>
+                          <SelectItem value="300px">300px</SelectItem>
+                          <SelectItem value="400px">400px</SelectItem>
+                          <SelectItem value="500px">500px</SelectItem>
+                          <SelectItem value="600px">600px</SelectItem>
+                          <SelectItem value="100vh">Full Viewport</SelectItem>
+                          <SelectItem value="50vh">Half Viewport</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-xs text-gray-500">Padding X</Label>
+                      <Select
+                        value={currentSection?.properties?.paddingX || 'px-4'}
+                        onValueChange={(value) => updateSectionGridSettings('paddingX', value)}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Horizontal padding" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="px-0">None</SelectItem>
+                          <SelectItem value="px-2">Small</SelectItem>
+                          <SelectItem value="px-4">Medium</SelectItem>
+                          <SelectItem value="px-8">Large</SelectItem>
+                          <SelectItem value="px-12">Extra Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-xs text-gray-500">Padding Y</Label>
+                      <Select
+                        value={currentSection?.properties?.paddingY || 'py-4'}
+                        onValueChange={(value) => updateSectionGridSettings('paddingY', value)}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Vertical padding" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="py-0">None</SelectItem>
+                          <SelectItem value="py-2">Small</SelectItem>
+                          <SelectItem value="py-4">Medium</SelectItem>
+                          <SelectItem value="py-8">Large</SelectItem>
+                          <SelectItem value="py-12">Extra Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
-                
+
                 <div className="mb-6 border-t pt-4">
-                  <h4 className="font-medium mb-3">Background</h4>
-                  <ColorGradientPicker
-                    type="background"
-                    value={currentSection?.properties?.backgroundColor || 'bg-white'}
-                    onChange={updateSectionBackgroundColor}
-                  />
+                  <Tabs defaultValue="background" className="w-full">
+                    <TabsList className="w-full grid grid-cols-2">
+                      <TabsTrigger value="background">Background</TabsTrigger>
+                      <TabsTrigger value="image">Image</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="background" className="pt-4">
+                      <ColorGradientPicker
+                        type="background"
+                        value={currentSection?.properties?.backgroundColor || 'bg-white'}
+                        onChange={updateSectionBackgroundColor}
+                      />
+                    </TabsContent>
+                    <TabsContent value="image" className="pt-4">
+                      <div className="space-y-3">
+                        <BackgroundImageUpload
+                          currentImage={currentSection?.properties?.backgroundImage?.replace(/url\(['"](.+)['"]\)/, '$1')}
+                          onImageSelect={updateSectionBackground}
+                        />
+                        
+                        {currentSection?.properties?.backgroundImage && (
+                          <>
+                            <div>
+                              <Label className="text-xs text-gray-500">Background Size</Label>
+                              <Select
+                                value={currentSection?.properties?.backgroundSize || 'cover'}
+                                onValueChange={(value) => updateSectionBackgroundProperty('backgroundSize', value)}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Background size" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="cover">Cover</SelectItem>
+                                  <SelectItem value="contain">Contain</SelectItem>
+                                  <SelectItem value="auto">Auto</SelectItem>
+                                  <SelectItem value="100%">100%</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs text-gray-500">Background Position</Label>
+                              <Select
+                                value={currentSection?.properties?.backgroundPosition || 'center'}
+                                onValueChange={(value) => updateSectionBackgroundProperty('backgroundPosition', value)}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Position" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="center">Center</SelectItem>
+                                  <SelectItem value="top">Top</SelectItem>
+                                  <SelectItem value="bottom">Bottom</SelectItem>
+                                  <SelectItem value="left">Left</SelectItem>
+                                  <SelectItem value="right">Right</SelectItem>
+                                  <SelectItem value="top left">Top Left</SelectItem>
+                                  <SelectItem value="top right">Top Right</SelectItem>
+                                  <SelectItem value="bottom left">Bottom Left</SelectItem>
+                                  <SelectItem value="bottom right">Bottom Right</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs text-gray-500">Background Repeat</Label>
+                              <Select
+                                value={currentSection?.properties?.backgroundRepeat || 'no-repeat'}
+                                onValueChange={(value) => updateSectionBackgroundProperty('backgroundRepeat', value)}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Repeat" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="no-repeat">No Repeat</SelectItem>
+                                  <SelectItem value="repeat">Repeat</SelectItem>
+                                  <SelectItem value="repeat-x">Repeat X</SelectItem>
+                                  <SelectItem value="repeat-y">Repeat Y</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs text-gray-500">Background Attachment</Label>
+                              <Select
+                                value={currentSection?.properties?.backgroundAttachment || 'scroll'}
+                                onValueChange={(value) => updateSectionBackgroundProperty('backgroundAttachment', value)}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Attachment" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="scroll">Scroll</SelectItem>
+                                  <SelectItem value="fixed">Fixed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </>
             )}

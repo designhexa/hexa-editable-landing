@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Section } from '@/context/EditorContext';
 import { useEditor } from '@/context/EditorContext';
@@ -10,7 +11,7 @@ interface EditableSectionProps {
 }
 
 const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) => {
-  const { isEditMode } = useEditor();
+  const { isEditMode, updateSection } = useEditor();
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const handleDragOver = (event: React.DragEvent) => {
@@ -29,8 +30,11 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     console.log(`Element ${elementId} dropped into section ${section.id}`);
   };
 
-  const handleElementDragStart = (elementId: string) => (event: React.DragEvent) => {
-    event.dataTransfer.setData('text/plain', elementId);
+  // Fixed function to correctly handle element drag start
+  const handleElementDragStart = (elementId: string) => {
+    return (event: React.DragEvent) => {
+      event.dataTransfer.setData('text/plain', elementId);
+    };
   };
 
   return (
@@ -51,8 +55,13 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
         backgroundImage: section.properties?.backgroundImage ? `url(${section.properties.backgroundImage})` : undefined,
         backgroundSize: section.properties?.backgroundSize || undefined,
         backgroundPosition: section.properties?.backgroundPosition || undefined,
+        backgroundRepeat: section.properties?.backgroundRepeat || 'no-repeat',
+        backgroundAttachment: section.properties?.backgroundAttachment || 'scroll',
         height: section.properties?.height,
       }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       {section.elements.map((element) => (
         <EditableElement
@@ -70,6 +79,10 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
           )}
         />
       ))}
+      
+      {isEditMode && isDraggingOver && (
+        <div className="absolute inset-0 border-2 border-dashed border-editor-blue bg-editor-blue/10 pointer-events-none z-10"></div>
+      )}
     </div>
   );
 };
