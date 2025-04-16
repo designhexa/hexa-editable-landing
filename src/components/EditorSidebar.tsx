@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { TextStyleEditor } from './TextStyleEditor';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { ColorGradientPicker } from './ColorGradientPicker';
 
 const EditorSidebar: React.FC = () => {
   const { 
@@ -19,7 +20,8 @@ const EditorSidebar: React.FC = () => {
     updateElement,
     replaceHeaderSection,
     replaceFooterSection,
-    saveEditorChanges
+    saveEditorChanges,
+    updateSection
   } = useEditor();
   
   const [activeTab, setActiveTab] = useState<'pages' | 'elements'>('pages');
@@ -231,6 +233,18 @@ const EditorSidebar: React.FC = () => {
           rowSpan: ''
         },
         [property]: value
+      }
+    });
+  };
+
+  const updateSectionBackground = (background: string) => {
+    if (!selectedElementData) return;
+    
+    const { pageId, sectionId } = selectedElementData;
+    
+    updateSection(pageId, sectionId, {
+      properties: {
+        backgroundColor: background
       }
     });
   };
@@ -462,6 +476,17 @@ const EditorSidebar: React.FC = () => {
                       <option value="row-span-3">Span 3</option>
                     </select>
                   </div>
+                </div>
+              )}
+              
+              {selectedElementData?.sectionId && (
+                <div className="mb-6 border-t pt-4">
+                  <h4 className="font-medium mb-3">Background</h4>
+                  <ColorGradientPicker
+                    type="background"
+                    value={selectedElementData?.section?.properties?.backgroundColor || 'bg-white'}
+                    onChange={updateSectionBackground}
+                  />
                 </div>
               )}
               
