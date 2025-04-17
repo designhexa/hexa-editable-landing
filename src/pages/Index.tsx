@@ -39,14 +39,15 @@ const Index = () => {
   }, [currentPageId, pages, navigate, location.pathname]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <div className={`flex flex-col w-full ${isEditMode ? 'pr-72' : ''}`}>
+    <div className={`min-h-screen bg-gray-50 flex ${isEditMode ? 'pr-4' : ''}`}>
+      <div className={`flex flex-col w-full transition-all duration-300 ease-in-out ${isEditMode ? 'pr-64' : ''}`}>
         <Navbar />
         <PageRenderer />
       </div>
-      <EditorSidebar />
+      {isEditMode && <EditorSidebar />}
     </div>
   );
 };
 
 export default Index;
+

@@ -131,7 +131,10 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
             <div className="absolute top-2 right-2 z-20 flex gap-1">
               <Popover>
                 <PopoverTrigger asChild>
-                  <div className="bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full p-1.5 shadow-md cursor-pointer" title="Section Settings">
+                  <div className={cn(
+                    "bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full p-1.5 shadow-md cursor-pointer",
+                    section.properties?.backgroundColor === 'bg-white' && 'bg-white/10 hover:bg-white/20 text-black'
+                  )} title="Section Settings">
                     <Settings className="h-4 w-4" />
                   </div>
                 </PopoverTrigger>
@@ -182,7 +185,10 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
               {section.properties?.isGridLayout && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <div className="bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full p-1.5 shadow-md cursor-pointer" title="Grid Layout">
+                    <div className={cn(
+                      "bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full p-1.5 shadow-md cursor-pointer",
+                      section.properties?.backgroundColor === 'bg-white' && 'bg-white/10 hover:bg-white/20 text-black'
+                    )} title="Grid Layout">
                       <Grid3X3 className="h-4 w-4" />
                     </div>
                   </PopoverTrigger>
@@ -234,7 +240,10 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
               
               <Popover>
                 <PopoverTrigger asChild>
-                  <div className="bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full p-1.5 shadow-md cursor-pointer" title="Section Height">
+                  <div className={cn(
+                    "bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full p-1.5 shadow-md cursor-pointer",
+                    section.properties?.backgroundColor === 'bg-white' && 'bg-white/10 hover:bg-white/20 text-black'
+                  )} title="Section Height">
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </PopoverTrigger>
@@ -267,7 +276,10 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
               
               <Popover>
                 <PopoverTrigger asChild>
-                  <div className="bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full p-1.5 shadow-md cursor-pointer" title="Background">
+                  <div className={cn(
+                    "bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full p-1.5 shadow-md cursor-pointer",
+                    section.properties?.backgroundColor === 'bg-white' && 'bg-white/10 hover:bg-white/20 text-black'
+                  )} title="Background">
                     <Palette className="h-4 w-4" />
                   </div>
                 </PopoverTrigger>
@@ -308,3 +320,4 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
 };
 
 export default EditableSection;
+
