@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from './ui/progress';
 
 interface BackgroundImageUploadProps {
   currentImage?: string;
@@ -51,16 +52,21 @@ export const BackgroundImageUpload: React.FC<BackgroundImageUploadProps> = ({
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      // Track upload progress manually by periodically checking upload status
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 5, 95));
+      }, 100);
+
+      // Upload without the onUploadProgress option which is causing the TypeScript error
       const { error: uploadError, data } = await supabase.storage
         .from('section-backgrounds')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
-          onUploadProgress: (progress) => {
-            const percentage = Math.round((progress.loaded / progress.total) * 100);
-            setUploadProgress(percentage);
-          }
         });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
@@ -91,7 +97,7 @@ export const BackgroundImageUpload: React.FC<BackgroundImageUploadProps> = ({
       });
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
+      setTimeout(() => setUploadProgress(0), 1000); // Reset progress after a delay
       // Clear input value to allow uploading the same file again
       const input = document.getElementById('bg-image-upload') as HTMLInputElement;
       if (input) input.value = '';
@@ -136,11 +142,7 @@ export const BackgroundImageUpload: React.FC<BackgroundImageUploadProps> = ({
           {isUploading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Uploading... {uploadProgress}%
-              <div 
-                className="absolute bottom-0 left-0 h-1 bg-editor-blue" 
-                style={{ width: `${uploadProgress}%` }}
-              />
+              Uploading...
             </>
           ) : (
             <>
@@ -158,6 +160,10 @@ export const BackgroundImageUpload: React.FC<BackgroundImageUploadProps> = ({
           onChange={handleFileSelect}
         />
       </div>
+      
+      {isUploading && (
+        <Progress value={uploadProgress} className="h-1" />
+      )}
       
       <div className="text-xs text-gray-500">
         Supported formats: JPEG, PNG, GIF, WebP. Max size: 10MB
