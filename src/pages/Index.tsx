@@ -28,12 +28,12 @@ const Index = () => {
     }
   }, [location.pathname, pages, setCurrentPageId]);
 
-  // Update URL when current page changes
+  // Update URL when current page changes, using replace instead of push to prevent blinking
   useEffect(() => {
     if (currentPageId) {
       const currentPage = pages.find(page => page.id === currentPageId);
       if (currentPage && location.pathname !== currentPage.slug) {
-        navigate(currentPage.slug);
+        navigate(currentPage.slug, { replace: true });
       }
     }
   }, [currentPageId, pages, navigate, location.pathname]);
