@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Section } from '@/context/EditorContext';
+import { Section, PageElement } from '@/context/EditorContext';
 import { useEditor } from '@/context/EditorContext';
 import EditableElement from './EditableElement';
 import { cn } from '@/lib/utils';

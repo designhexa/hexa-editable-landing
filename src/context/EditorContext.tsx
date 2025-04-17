@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 export type ElementType = 'heading' | 'text' | 'image' | 'button' | 'section' | 'html';
@@ -51,7 +52,7 @@ export interface Section {
     backgroundRepeat?: string;
     backgroundAttachment?: string;
   };
-  elements: Element[];
+  elements: PageElement[];
 }
 
 export interface Page {

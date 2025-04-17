@@ -1,16 +1,16 @@
 
 import React, { useState } from 'react';
-import { useEditor } from '@/context/EditorContext';
+import { useEditor, PageElement } from '@/context/EditorContext';
 import { cn } from '@/lib/utils';
 import { HtmlEmbed } from './HtmlEmbed';
 
 interface EditableElementProps {
-  element: any;
+  element: PageElement;
   pageId: string;
   sectionId: string;
   className?: string;
   draggable?: boolean;
-  onDragStart?: (elementId: string) => (event: React.DragEvent) => void;
+  onDragStart?: (event: React.DragEvent) => void;
 }
 
 const EditableElement: React.FC<EditableElementProps> = ({
@@ -122,7 +122,7 @@ const EditableElement: React.FC<EditableElementProps> = ({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       draggable={draggable}
-      onDragStart={draggable && onDragStart ? onDragStart(element.id) : undefined}
+      onDragStart={onDragStart}
     >
       {renderElement()}
     </div>
