@@ -4,6 +4,7 @@ import { Section, PageElement } from '@/context/EditorContext';
 import { useEditor } from '@/context/EditorContext';
 import EditableElement from './EditableElement';
 import { cn } from '@/lib/utils';
+import { Settings } from 'lucide-react';
 
 interface EditableSectionProps {
   section: Section;
@@ -11,8 +12,10 @@ interface EditableSectionProps {
 }
 
 const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) => {
-  const { isEditMode, updateSection } = useEditor();
+  const { isEditMode, updateSection, getSelectedElement } = useEditor();
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const selectedElement = getSelectedElement();
+  const isSelected = selectedElement?.sectionId === section.id;
 
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault();
@@ -30,8 +33,8 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     console.log(`Element ${elementId} dropped into section ${section.id}`);
   };
 
-  const handleElementDragStart = (elementId: string) => (event: React.DragEvent) => {
-    event.dataTransfer.setData('text/plain', elementId);
+  const handleElementDragStart = (element: PageElement) => (event: React.DragEvent) => {
+    event.dataTransfer.setData('text/plain', element.id);
   };
 
   return (
@@ -67,7 +70,7 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
           pageId={pageId}
           sectionId={section.id}
           draggable={section.properties?.isDraggableGrid}
-          onDragStart={handleElementDragStart(element.id)}
+          onDragStart={handleElementDragStart(element)}
           className={cn(
             element.gridPosition?.column,
             element.gridPosition?.row,
@@ -77,8 +80,19 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
         />
       ))}
       
-      {isEditMode && isDraggingOver && (
-        <div className="absolute inset-0 border-2 border-dashed border-editor-blue bg-editor-blue/10 pointer-events-none z-10"></div>
+      {isEditMode && (
+        <>
+          {/* Section edit icon in top-right corner */}
+          {isSelected && (
+            <div className="absolute top-2 right-2 z-20 bg-editor-blue text-white rounded-full p-1.5 shadow-md">
+              <Settings className="h-4 w-4" />
+            </div>
+          )}
+          
+          {isDraggingOver && (
+            <div className="absolute inset-0 border-2 border-dashed border-editor-blue bg-editor-blue/10 pointer-events-none z-10"></div>
+          )}
+        </>
       )}
     </div>
   );

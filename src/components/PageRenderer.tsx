@@ -54,9 +54,9 @@ const PageRenderer: React.FC = () => {
   };
   
   return (
-    <div className={`min-h-screen flex flex-col ${isEditMode ? 'pr-72' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${isEditMode ? 'w-[calc(100%-18rem)]' : 'w-full'}`}>
       {isEditMode && canEdit && (
-        <div className={`bg-gray-100 p-2 border-b border-gray-200 ${isEditMode ? 'pr-72' : ''} sticky top-0 z-10`}>
+        <div className="bg-gray-100 p-2 border-b border-gray-200 sticky top-0 z-10 w-full">
           <div className="container mx-auto flex items-center flex-wrap gap-2">
             <div className="flex items-center">
               <span className="text-sm font-medium mr-2">Page Title:</span>

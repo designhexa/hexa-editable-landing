@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Select,
@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ChromePicker } from 'react-color';
 
 interface ColorGradientPickerProps {
   value: string;
@@ -16,12 +17,12 @@ interface ColorGradientPickerProps {
 }
 
 const COLORS = [
-  { value: 'bg-white', label: 'White', textClass: 'text-white' },
-  { value: 'bg-gray-100', label: 'Light Gray', textClass: 'text-gray-100' },
-  { value: 'bg-editor-blue', label: 'Blue', textClass: 'text-editor-blue' },
-  { value: 'bg-editor-purple', label: 'Purple', textClass: 'text-editor-purple' },
-  { value: 'bg-editor-teal', label: 'Teal', textClass: 'text-editor-teal' },
-  { value: 'bg-editor-indigo', label: 'Indigo', textClass: 'text-editor-indigo' },
+  { value: 'bg-white', label: 'White', textClass: 'text-white', hex: '#FFFFFF' },
+  { value: 'bg-gray-100', label: 'Light Gray', textClass: 'text-gray-100', hex: '#F3F4F6' },
+  { value: 'bg-editor-blue', label: 'Blue', textClass: 'text-editor-blue', hex: '#3B82F6' },
+  { value: 'bg-editor-purple', label: 'Purple', textClass: 'text-editor-purple', hex: '#8B5CF6' },
+  { value: 'bg-editor-teal', label: 'Teal', textClass: 'text-editor-teal', hex: '#14B8A6' },
+  { value: 'bg-editor-indigo', label: 'Indigo', textClass: 'text-editor-indigo', hex: '#6366F1' },
 ];
 
 const GRADIENTS = [
@@ -36,8 +37,23 @@ export const ColorGradientPicker: React.FC<ColorGradientPickerProps> = ({
   onChange,
   type
 }) => {
-  const colors = type === 'text' ? COLORS.map(c => ({ value: c.textClass, label: c.label })) : COLORS;
+  const colors = type === 'text' ? COLORS.map(c => ({ value: c.textClass, label: c.label, hex: c.hex })) : COLORS;
   const showGradients = type === 'background';
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [customColor, setCustomColor] = useState('#FFFFFF');
+
+  const handleCustomColorChange = (color: any) => {
+    setCustomColor(color.hex);
+  };
+
+  const applyCustomColor = () => {
+    if (type === 'background') {
+      onChange(`bg-[${customColor}]`);
+    } else {
+      onChange(`text-[${customColor}]`);
+    }
+    setShowColorPicker(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -53,7 +69,39 @@ export const ColorGradientPicker: React.FC<ColorGradientPickerProps> = ({
             onClick={() => onChange(color.value)}
           />
         ))}
+        
+        {/* Custom color button */}
+        <button
+          className={cn(
+            'w-8 h-8 rounded-full border-2 bg-gradient-to-r from-red-500 via-green-500 to-blue-500',
+            value.startsWith('bg-[#') || value.startsWith('text-[#') ? 'border-black' : 'border-transparent'
+          )}
+          onClick={() => setShowColorPicker(!showColorPicker)}
+          title="Custom Color"
+        />
       </div>
+
+      {showColorPicker && (
+        <div className="relative z-30">
+          <div className="absolute">
+            <ChromePicker 
+              color={customColor}
+              onChange={handleCustomColorChange}
+              disableAlpha={true}
+            />
+            <button 
+              className="w-full mt-2 py-2 bg-editor-blue text-white rounded-md text-sm"
+              onClick={applyCustomColor}
+            >
+              Apply Color
+            </button>
+          </div>
+          <div 
+            className="fixed inset-0 z-20" 
+            onClick={() => setShowColorPicker(false)}
+          />
+        </div>
+      )}
 
       {showGradients && (
         <Select
