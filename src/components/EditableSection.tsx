@@ -4,7 +4,7 @@ import { Section, PageElement } from '@/context/EditorContext';
 import { useEditor } from '@/context/EditorContext';
 import EditableElement from './EditableElement';
 import { cn } from '@/lib/utils';
-import { Settings } from 'lucide-react';
+import { Settings, Grid3X3, ArrowUpDown, Palette } from 'lucide-react';
 
 interface EditableSectionProps {
   section: Section;
@@ -82,10 +82,23 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
       
       {isEditMode && (
         <>
-          {/* Section edit icon in top-right corner */}
+          {/* Section edit icons in top-right corner */}
           {isSelected && (
-            <div className="absolute top-2 right-2 z-20 bg-editor-blue text-white rounded-full p-1.5 shadow-md">
-              <Settings className="h-4 w-4" />
+            <div className="absolute top-2 right-2 z-20 flex gap-1">
+              <div className="bg-editor-blue text-white rounded-full p-1.5 shadow-md" title="Section Settings">
+                <Settings className="h-4 w-4" />
+              </div>
+              {section.properties?.isGridLayout && (
+                <div className="bg-editor-purple text-white rounded-full p-1.5 shadow-md" title="Grid Layout">
+                  <Grid3X3 className="h-4 w-4" />
+                </div>
+              )}
+              <div className="bg-editor-teal text-white rounded-full p-1.5 shadow-md" title="Section Height">
+                <ArrowUpDown className="h-4 w-4" />
+              </div>
+              <div className="bg-editor-indigo text-white rounded-full p-1.5 shadow-md" title="Background Color">
+                <Palette className="h-4 w-4" />
+              </div>
             </div>
           )}
           

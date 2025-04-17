@@ -57,6 +57,18 @@ export const ColorGradientPicker: React.FC<ColorGradientPickerProps> = ({
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="text-sm font-medium">{type === 'background' ? 'Background Colors' : 'Text Colors'}</h4>
+        <button
+          className={cn(
+            'w-8 h-8 rounded-full border-2 bg-gradient-to-r from-red-500 via-green-500 to-blue-500',
+            value.startsWith('bg-[#') || value.startsWith('text-[#') ? 'border-black' : 'border-transparent'
+          )}
+          onClick={() => setShowColorPicker(!showColorPicker)}
+          title="Color Wheel"
+        />
+      </div>
+
       <div className="grid grid-cols-6 gap-2">
         {colors.map((color) => (
           <button
@@ -69,16 +81,6 @@ export const ColorGradientPicker: React.FC<ColorGradientPickerProps> = ({
             onClick={() => onChange(color.value)}
           />
         ))}
-        
-        {/* Custom color button */}
-        <button
-          className={cn(
-            'w-8 h-8 rounded-full border-2 bg-gradient-to-r from-red-500 via-green-500 to-blue-500',
-            value.startsWith('bg-[#') || value.startsWith('text-[#') ? 'border-black' : 'border-transparent'
-          )}
-          onClick={() => setShowColorPicker(!showColorPicker)}
-          title="Custom Color"
-        />
       </div>
 
       {showColorPicker && (
