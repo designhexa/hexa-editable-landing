@@ -48,6 +48,21 @@ export const BackgroundImageUpload: React.FC<BackgroundImageUploadProps> = ({
     setUploadProgress(0);
     
     try {
+      // First check if bucket exists, if not create it
+      const { error: bucketError } = await supabase.storage.getBucket('section-backgrounds');
+      
+      if (bucketError && bucketError.message.includes('not found')) {
+        // Attempt to create the bucket
+        const { error: createBucketError } = await supabase.storage.createBucket('section-backgrounds', {
+          public: true,
+          fileSizeLimit: 10485760, // 10MB in bytes
+        });
+        
+        if (createBucketError) {
+          throw createBucketError;
+        }
+      }
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
@@ -57,6 +72,7 @@ export const BackgroundImageUpload: React.FC<BackgroundImageUploadProps> = ({
         setUploadProgress(prev => Math.min(prev + 5, 95));
       }, 100);
 
+      // Upload without the onUploadProgress option which is causing the TypeScript error
       const { error: uploadError, data } = await supabase.storage
         .from('section-backgrounds')
         .upload(filePath, file, {
@@ -170,4 +186,3 @@ export const BackgroundImageUpload: React.FC<BackgroundImageUploadProps> = ({
     </div>
   );
 };
-
