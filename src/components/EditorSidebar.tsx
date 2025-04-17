@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useEditor } from '@/context/EditorContext';
-import { Plus, Settings, Layers, FileText, LayoutGrid, Type, Save, RefreshCw, Grid, ArrowsMaximize } from 'lucide-react';
+import { Plus, Settings, Layers, FileText, LayoutGrid, Type, Save, RefreshCw, Grid, Maximize, MinusSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TextStyleEditor } from './TextStyleEditor';
 import { Button } from './ui/button';
@@ -496,7 +495,7 @@ const EditorSidebar: React.FC = () => {
                 className="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm flex flex-col items-center justify-center"
                 disabled={!isAdmin}
               >
-                <ArrowsMaximize size={20} className="mb-1" />
+                <Maximize size={20} className="mb-1" />
                 Header Section
               </button>
               <button
@@ -504,7 +503,7 @@ const EditorSidebar: React.FC = () => {
                 className="p-2 bg-gray-50 hover:bg-gray-100 rounded text-sm flex flex-col items-center justify-center"
                 disabled={!isAdmin}
               >
-                <ArrowsMaximize size={20} className="mb-1 rotate-180" />
+                <MinusSquare size={20} className="mb-1" />
                 Footer Section
               </button>
             </div>

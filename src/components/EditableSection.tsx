@@ -30,11 +30,8 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
     console.log(`Element ${elementId} dropped into section ${section.id}`);
   };
 
-  // Fixed function to correctly handle element drag start
-  const handleElementDragStart = (elementId: string) => {
-    return (event: React.DragEvent) => {
-      event.dataTransfer.setData('text/plain', elementId);
-    };
+  const handleElementDragStart = (elementId: string) => (event: React.DragEvent) => {
+    event.dataTransfer.setData('text/plain', elementId);
   };
 
   return (
@@ -70,7 +67,7 @@ const EditableSection: React.FC<EditableSectionProps> = ({ section, pageId }) =>
           pageId={pageId}
           sectionId={section.id}
           draggable={section.properties?.isDraggableGrid}
-          onDragStart={handleElementDragStart}
+          onDragStart={handleElementDragStart(element.id)}
           className={cn(
             element.gridPosition?.column,
             element.gridPosition?.row,

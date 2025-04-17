@@ -33,7 +33,7 @@ export interface PageElement {
 
 export interface Section {
   id: string;
-  elements: PageElement[];
+  type?: 'content' | 'header' | 'footer';
   properties?: {
     backgroundColor?: string;
     paddingY?: string;
@@ -48,8 +48,10 @@ export interface Section {
     backgroundImage?: string;
     backgroundSize?: string;
     backgroundPosition?: string;
+    backgroundRepeat?: string;
+    backgroundAttachment?: string;
   };
-  type?: SectionType;
+  elements: Element[];
 }
 
 export interface Page {
